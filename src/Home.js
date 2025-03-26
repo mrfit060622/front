@@ -57,7 +57,7 @@ function Home() {
   
     try {
       const resposta = await axios.post(
-        "https://mrfit-app-topaz.vercel.app/calculo/",
+        `${process.env.REACT_APP_API_HOST}/calculo/`,
         dadosFormulario,
         {
           headers: {
