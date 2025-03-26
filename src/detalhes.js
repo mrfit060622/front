@@ -32,8 +32,8 @@ function Detalhes() {
         setLoading(true);
 
         const endpoint = isPaid 
-            ? 'https://mrfit-app-topaz.vercel.app/pdf/gerar_pdf_pg'
-            : 'https://mrfit-app-topaz.vercel.app/pdf/gerar_pdf';
+            ? `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`
+            : `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf`;
     
         try {
             const response = await fetch(endpoint, {
