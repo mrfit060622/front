@@ -1,73 +1,167 @@
-import React from 'react';
-import { Container } from 'react-bootstrap';
+import React, { useEffect } from "react";
+import { loadMercadoPago } from "@mercadopago/sdk-js";
 
-function Termos() {
+function TermosDeUso() {
+  useEffect(() => {
+    async function initMercadoPago() {
+      if (!process.env.REACT_APP_API_HOST) {
+        console.error("⚠️ Variável REACT_APP_API_HOST não está definida no .env");
+        return;
+      }
+
+      try {
+        // Carregar o SDK do Mercado Pago
+        await loadMercadoPago();
+
+        // Inicializar o Mercado Pago
+        const mp = new window.MercadoPago("APP_USR-82278741-94ac-4e85-b6ad-6179e250794e");
+
+        const amount = "10.5"; // valor pode ser dinâmico no futuro
+
+        // Iniciar o formulário de pagamento
+        const cardForm = mp.cardForm({
+          amount,
+          iframe: true,  // Defina iframe como true para habilitar o uso do iframe
+          form: {
+            id: "form-checkout",
+            cardNumber: {
+              id: "form-checkout__cardNumber",
+              placeholder: "Número do cartão",
+            },
+            expirationMonth: {
+              id: "form-checkout__expirationMonth",
+              placeholder: "Mês",
+            },
+            expirationYear: {
+              id: "form-checkout__expirationYear",
+              placeholder: "Ano",
+            },
+            securityCode: {
+              id: "form-checkout__securityCode",
+              placeholder: "CVV",
+            },
+            cardholderName: {
+              id: "form-checkout__cardholderName",
+              placeholder: "Nome no cartão",
+            },
+            issuer: {
+              id: "form-checkout__issuer",
+              placeholder: "Banco emissor",
+            },
+            installments: {
+              id: "form-checkout__installments",
+              placeholder: "Parcelas",
+            },
+            identificationType: {
+              id: "form-checkout__identificationType",
+              placeholder: "Tipo de documento",
+            },
+            identificationNumber: {
+              id: "form-checkout__identificationNumber",
+              placeholder: "Número do documento",
+            },
+            cardholderEmail: {
+              id: "form-checkout__cardholderEmail",
+              placeholder: "Seu e-mail",
+            },
+          },
+          callbacks: {
+            onFormMounted: error => {
+              if (error) {
+                console.warn("Erro ao montar formulário:", error);
+              } else {
+                console.log("✅ Formulário Mercado Pago montado com sucesso");
+              }
+            },
+            onSubmit: event => {
+              event.preventDefault();
+
+              // Obter os dados do formulário
+              const {
+                paymentMethodId,
+                issuerId,
+                cardholderEmail,
+                amount,
+                token,
+                installments,
+                identificationNumber,
+                identificationType,
+              } = cardForm.getCardFormData(); // Obtenção correta dos dados
+
+              const payload = {
+                valor: Number(amount),
+                token,
+                issuer_id: issuerId,
+                metodo_pagamento: paymentMethodId,
+                parcelamento: Number(installments),
+                descricao: "Relatório MrFit",
+                payer: {
+                  email: cardholderEmail,
+                  identification: {
+                    tp_doc: identificationType,
+                    nr_cpf: identificationNumber,
+                  },
+                },
+              };
+
+              console.log("Payload enviado:", payload);  // Log do payload para depuração
+
+              fetch(`${process.env.REACT_APP_API_HOST}/pagamento/criar_pagamento`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+              })
+                .then(res => res.json())
+                .then(data => {
+                  console.log("✅ Pagamento processado com sucesso:", data);
+                  // Ex: redirecionar para página de sucesso
+                })
+                .catch(err => {
+                  console.error("❌ Erro ao processar pagamento:", err);
+                });
+            },
+            onFetching: resource => {
+              console.log("🔄 Buscando recurso:", resource);
+              const progressBar = document.querySelector(".progress-bar");
+              if (progressBar) progressBar.removeAttribute("value");
+
+              return () => {
+                if (progressBar) progressBar.setAttribute("value", "0");
+              };
+            },
+          },
+        });
+      } catch (error) {
+        console.error("❌ Erro ao iniciar Mercado Pago:", error);
+      }
+    }
+
+    initMercadoPago();
+  }, []);
+
   return (
-    <div>
-      <Container>
-        <h2 className="text-center mt-4 mb-4">Termos de Uso do Site MrFit</h2>
+    <div className="container mt-4">
+      <h2 className="mb-3">Pagamento - MrFit</h2>
+      <form id="form-checkout">
+        <div id="form-checkout__cardNumber" className="form-group mb-2"></div>
+        <div id="form-checkout__expirationMonth" className="form-group mb-2"></div>
+        <div id="form-checkout__expirationYear" className="form-group mb-2"></div>
+        <div id="form-checkout__securityCode" className="form-group mb-2"></div>
+        <input type="text" id="form-checkout__cardholderName" className="form-control mb-2" placeholder="Nome no cartão" />
+        <select id="form-checkout__issuer" className="form-control mb-2"></select>
+        <select id="form-checkout__installments" className="form-control mb-2"></select>
+        <select id="form-checkout__identificationType" className="form-control mb-2"></select>
+        <input type="text" id="form-checkout__identificationNumber" className="form-control mb-2" placeholder="Documento" />
+        <input type="email" id="form-checkout__cardholderEmail" className="form-control mb-2" placeholder="E-mail" />
 
-        <h4>1. Introdução</h4>
-        <p>
-          Bem-vindo ao site <strong>MrFit</strong>. Ao acessar e utilizar nossos serviços, 
-          você concorda com os termos e condições descritos abaixo. Caso não concorde, pedimos 
-          que não utilize o site.
-        </p>
+        <button type="submit" className="btn btn-primary w-100">Pagar</button>
+      </form>
 
-        <h4>2. Objetivo do Site</h4>
-        <p>
-          O <strong>MrFit</strong> tem como objetivo fornecer ferramentas para cálculo de calorias, 
-          planos nutricionais e dicas de saúde e bem-estar. As informações disponibilizadas não 
-          substituem a orientação profissional de nutricionistas ou médicos.
-        </p>
-
-        <h4>3. Coleta e Uso de Dados</h4>
-        <ul>
-          <li>
-            <strong>3.1.</strong> Ao utilizar nossos serviços, podemos coletar informações como nome e e-mail para envio de promoções e novidades.
-          </li>
-          <li>
-            <strong>3.2.</strong> Os dados coletados serão armazenados com segurança e não serão compartilhados com terceiros sem autorização prévia.
-          </li>
-          <li>
-            <strong>3.3.</strong> Você pode solicitar a remoção do seu e-mail de nossa base de dados a qualquer momento.
-          </li>
-        </ul>
-
-        <h4>4. Propriedade Intelectual</h4>
-        <p>
-          Todo o conteúdo do site, incluindo textos, imagens e cálculos, é protegido por direitos 
-          autorais e não pode ser reproduzido sem permissão.
-        </p>
-
-        <h4>5. Isenção de Responsabilidade</h4>
-        <ul>
-          <li>
-            <strong>5.1.</strong> O <strong>MrFit</strong> não se responsabiliza por eventuais danos causados pelo uso das informações do site.
-          </li>
-          <li>
-            <strong>5.2.</strong> Os resultados podem variar de pessoa para pessoa e dependem de diversos fatores individuais.
-          </li>
-        </ul>
-
-        <h4>6. Modificações dos Termos</h4>
-        <p>
-          Estes termos podem ser alterados a qualquer momento, sendo responsabilidade do usuário revisar as atualizações.
-        </p>
-
-        <h4>7. Contato</h4>
-        <p>
-          Para dúvidas ou solicitações, entre em contato pelo e-mail: 
-          <a href="mailto:suporte@mrfit.com.br"> suporte@mrfit.com.br</a>.
-        </p>
-
-        <h4>8. Aceitação dos Termos</h4>
-        <p>
-          O uso do site implica na aceitação integral destes Termos de Uso.
-        </p>
-      </Container>
+      <progress className="progress-bar w-100 mt-3" value="0" max="100"></progress>
     </div>
   );
 }
 
-export default Termos;
+export default TermosDeUso;

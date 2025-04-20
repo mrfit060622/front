@@ -5,7 +5,7 @@ import Detalhes from './detalhes';
 import Servicos from './Servicos';
 import QuemSomos from './QuemSomos';
 import Termos from './TermosDeUso';
-import ResumoNutricional from './ResumoNutricional';
+import Pagamento from './pagamento';
 import PlanoMetabolico from './PlanoMetabolico';
 import PerfilCalorico from './PerfilCalorico';
 import EstrategiaAlimentar from './EstrategiaAlimentar';
@@ -46,7 +46,7 @@ function App() {
         <Route path="/detalhes" element={<Detalhes />} />
         <Route path="/QuemSomos" element={<QuemSomos />} />
         <Route path="/TermosDeUso" element={<Termos />} />
-        <Route path="/resumo-nutricional" element={<ResumoNutricional />} />
+        <Route path="/Pagamento" element={<Pagamento />} />
         <Route path="/plano-metabolico" element={<PlanoMetabolico />} />
         <Route path="/perfil-calorico" element={<PerfilCalorico />} />
       </Routes>
