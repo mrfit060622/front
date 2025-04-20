@@ -14,9 +14,9 @@ function TermosDeUso() {
         await loadMercadoPago();
 
         // Inicializar o Mercado Pago
-        const mp = new window.MercadoPago(`${process.env.REACT_APP_CHAVE_MP}`)
+        const mp = new window.MercadoPago(`${process.env.REACT_APP_CHAVE_MP}`);
 
-        const amount = "10.5"; // valor pode ser dinâmico no futuro
+        const amount = "1.0"; // valor pode ser dinâmico no futuro
 
         // Iniciar o formulário de pagamento
         const cardForm = mp.cardForm({
