@@ -1,166 +1,123 @@
-import React, { useEffect } from "react";
-import { loadMercadoPago } from "@mercadopago/sdk-js";
+import React, { useState } from 'react';
+import { Container, Row, Col, Card, Button, Form, Spinner, Alert } from 'react-bootstrap';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function TermosDeUso() {
-  useEffect(() => {
-    async function initMercadoPago() {
-      if (!process.env.REACT_APP_API_HOST) {
-        console.error("⚠️ Variável REACT_APP_API_HOST não está definida no .env");
-        return;
-      }
+  const valorPagamento = 1.0;
+  const [paymentData, setPaymentData] = useState({
+    transactionAmount: valorPagamento,
+    description: 'Plano de Acompanhamento',
+    payerEmail: '',
+    payerName: '',
+    paymentMethod: 'pix',
+  });
 
-      try {
-        // Carregar o SDK do Mercado Pago
-        await loadMercadoPago();
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-        // Inicializar o Mercado Pago
-        const mp = new window.MercadoPago(`${process.env.REACT_APP_CHAVE_MP}`);
+  const handlePayment = async (e) => {
+    e.preventDefault();
 
-        const amount = "1.0"; // valor pode ser dinâmico no futuro
-
-        // Iniciar o formulário de pagamento
-        const cardForm = mp.cardForm({
-          amount,
-          iframe: true,  // Defina iframe como true para habilitar o uso do iframe
-          form: {
-            id: "form-checkout",
-            cardNumber: {
-              id: "form-checkout__cardNumber",
-              placeholder: "Número do cartão",
-            },
-            expirationMonth: {
-              id: "form-checkout__expirationMonth",
-              placeholder: "Mês",
-            },
-            expirationYear: {
-              id: "form-checkout__expirationYear",
-              placeholder: "Ano",
-            },
-            securityCode: {
-              id: "form-checkout__securityCode",
-              placeholder: "CVV",
-            },
-            cardholderName: {
-              id: "form-checkout__cardholderName",
-              placeholder: "Nome no cartão",
-            },
-            issuer: {
-              id: "form-checkout__issuer",
-              placeholder: "Banco emissor",
-            },
-            installments: {
-              id: "form-checkout__installments",
-              placeholder: "Parcelas",
-            },
-            identificationType: {
-              id: "form-checkout__identificationType",
-              placeholder: "Tipo de documento",
-            },
-            identificationNumber: {
-              id: "form-checkout__identificationNumber",
-              placeholder: "Número do documento",
-            },
-            cardholderEmail: {
-              id: "form-checkout__cardholderEmail",
-              placeholder: "Seu e-mail",
-            },
-          },
-          callbacks: {
-            onFormMounted: error => {
-              if (error) {
-                console.warn("Erro ao montar formulário:", error);
-              } else {
-                console.log("✅ Formulário Mercado Pago montado com sucesso");
-              }
-            },
-            onSubmit: event => {
-              event.preventDefault();
-
-              // Obter os dados do formulário
-              const {
-                paymentMethodId,
-                issuerId,
-                cardholderEmail,
-                amount,
-                token,
-                installments,
-                identificationNumber,
-                identificationType,
-              } = cardForm.getCardFormData(); // Obtenção correta dos dados
-
-              const payload = {
-                valor: Number(amount),
-                token,
-                issuer_id: issuerId,
-                metodo_pagamento: paymentMethodId,
-                parcelamento: Number(installments),
-                descricao: "Relatório MrFit",
-                payer: {
-                  email: cardholderEmail,
-                  identification: {
-                    tp_doc: identificationType,
-                    nr_cpf: identificationNumber,
-                  },
-                },
-              };
-
-              console.log("Payload enviado:", payload);  // Log do payload para depuração
-
-              fetch(`${process.env.REACT_APP_API_HOST}/pagamento/criar_pagamento`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
-              })
-                .then(res => res.json())
-                .then(data => {
-                  console.log("✅ Pagamento processado com sucesso:", data);
-                  // Ex: redirecionar para página de sucesso
-                })
-                .catch(err => {
-                  console.error("❌ Erro ao processar pagamento:", err);
-                });
-            },
-            onFetching: resource => {
-              console.log("🔄 Buscando recurso:", resource);
-              const progressBar = document.querySelector(".progress-bar");
-              if (progressBar) progressBar.removeAttribute("value");
-
-              return () => {
-                if (progressBar) progressBar.setAttribute("value", "0");
-              };
-            },
-          },
-        });
-      } catch (error) {
-        console.error("❌ Erro ao iniciar Mercado Pago:", error);
-      }
+    if (!paymentData.payerEmail || !paymentData.payerName) {
+      setPaymentStatus('Preencha todos os campos para continuar.');
+      return;
     }
 
-    initMercadoPago();
-  }, []);
+    if (paymentData.transactionAmount <= 0) {
+      setPaymentStatus('Valor do pagamento inválido.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setPaymentStatus('Iniciando pagamento, por favor aguarde...');
+
+      const resposta = await axios.post(
+        `${process.env.REACT_APP_API_HOST}/pagamento/checkout`,
+        paymentData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const { status, init_point } = resposta.data;
+
+      if (status === 'success' && init_point) {
+        setPaymentStatus('Redirecionando para o Mercado Pago...');
+        setTimeout(() => {
+          window.location.href = init_point;
+        }, 1500);
+      } else {
+        setPaymentStatus('Erro ao iniciar pagamento, tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro no pagamento:', error);
+      setPaymentStatus('Erro ao iniciar pagamento, tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-3">Pagamento - MrFit</h2>
-      <form id="form-checkout">
-        <div id="form-checkout__cardNumber" className="form-group mb-2"></div>
-        <div id="form-checkout__expirationMonth" className="form-group mb-2"></div>
-        <div id="form-checkout__expirationYear" className="form-group mb-2"></div>
-        <div id="form-checkout__securityCode" className="form-group mb-2"></div>
-        <input type="text" id="form-checkout__cardholderName" className="form-control mb-2" placeholder="Nome no cartão" />
-        <select id="form-checkout__issuer" className="form-control mb-2"></select>
-        <select id="form-checkout__installments" className="form-control mb-2"></select>
-        <select id="form-checkout__identificationType" className="form-control mb-2"></select>
-        <input type="text" id="form-checkout__identificationNumber" className="form-control mb-2" placeholder="Documento" />
-        <input type="email" id="form-checkout__cardholderEmail" className="form-control mb-2" placeholder="E-mail" />
+    <Container className="d-flex justify-content-center align-items-center py-5">
+      <Row>
+        <Col>
+          <Card>
+            <Card.Body>
+              <h2 className="meutitle">Pagamento</h2>
+              <Form onSubmit={handlePayment}>
+                <Form.Group controlId="formEmail" className="mb-3">
+                  <Form.Label>E-mail</Form.Label>
+                  <Form.Control
+                    type="email"
+                    name="payerEmail"
+                    placeholder="Digite seu e-mail"
+                    value={paymentData.payerEmail}
+                    onChange={(e) => setPaymentData({ ...paymentData, payerEmail: e.target.value })}
+                    required
+                  />
+                </Form.Group>
 
-        <button type="submit" className="btn btn-primary w-100">Pagar</button>
-      </form>
+                <Form.Group controlId="formNome" className="mb-3">
+                  <Form.Label>Nome</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="payerName"
+                    placeholder="Digite seu nome"
+                    value={paymentData.payerName}
+                    onChange={(e) => setPaymentData({ ...paymentData, payerName: e.target.value })}
+                    required
+                  />
+                </Form.Group>
 
-      <progress className="progress-bar w-100 mt-3" value="0" max="100"></progress>
-    </div>
+                <Form.Group controlId="formValor" className="mb-3">
+                  <Form.Label>Valor a Pagar</Form.Label>
+                  <Form.Control
+                    type="text"
+                    readOnly
+                    value={`R$ ${paymentData.transactionAmount.toFixed(2)}`}
+                  />
+                </Form.Group>
+
+                <Button variant="primary" type="submit" disabled={loading} className="meubutton">
+                  {loading ? <Spinner animation="border" size="sm" /> : 'Pagar Agora'}
+                </Button>
+              </Form>
+
+              {paymentStatus && (
+                <Alert className="mt-4" variant="info">
+                  {paymentStatus}
+                </Alert>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
   );
 }
 

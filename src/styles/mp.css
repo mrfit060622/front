@@ -1,0 +1,19 @@
+#form-checkout__cardNumber iframe,
+#form-checkout__securityCode iframe {
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  background-color: rgba(243, 235, 235, 0.904);
+  padding: 10px;
+}
+
+#form-checkout__expirationMonth iframe,
+#form-checkout__expirationYear iframe {
+  width: 100% !important;
+  min-height: 38px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 6px 12px;
+  box-sizing: border-box;
+}
