@@ -10,7 +10,7 @@ function TermosDeUso() {
     description: 'Plano de Acompanhamento',
     payerEmail: '',
     payerName: '',
-    paymentMethod: 'pix',
+    paymentMethod: 'pix', // Essa chave pode ser usada no futuro se você quiser definir preferências específicas
   });
 
   const [paymentStatus, setPaymentStatus] = useState(null);
@@ -21,18 +21,18 @@ function TermosDeUso() {
     e.preventDefault();
 
     if (!paymentData.payerEmail || !paymentData.payerName) {
-      setPaymentStatus('Preencha todos os campos para continuar.');
+      setPaymentStatus('❌ Preencha todos os campos para continuar.');
       return;
     }
 
     if (paymentData.transactionAmount <= 0) {
-      setPaymentStatus('Valor do pagamento inválido.');
+      setPaymentStatus('❌ Valor do pagamento inválido.');
       return;
     }
 
     try {
       setLoading(true);
-      setPaymentStatus('Iniciando pagamento, por favor aguarde...');
+      setPaymentStatus('🔄 Gerando link de pagamento...');
 
       const resposta = await axios.post(
         `${process.env.REACT_APP_API_HOST}/pagamento/checkout`,
@@ -47,16 +47,14 @@ function TermosDeUso() {
       const { status, init_point } = resposta.data;
 
       if (status === 'success' && init_point) {
-        setPaymentStatus('Redirecionando para o Mercado Pago...');
-        setTimeout(() => {
-          window.location.href = init_point;
-        }, 1500);
+        setPaymentStatus('✅ Redirecionando para o Mercado Pago...');
+        window.location.href = init_point;
       } else {
-        setPaymentStatus('Erro ao iniciar pagamento, tente novamente.');
+        setPaymentStatus('❌ Erro ao iniciar pagamento. Tente novamente.');
       }
     } catch (error) {
       console.error('Erro no pagamento:', error);
-      setPaymentStatus('Erro ao iniciar pagamento, tente novamente.');
+      setPaymentStatus('❌ Erro ao iniciar pagamento. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -68,7 +66,10 @@ function TermosDeUso() {
         <Col>
           <Card>
             <Card.Body>
-              <h2 className="meutitle">Pagamento</h2>
+              <h2 className="meutitle mb-4">💳 Pagamento Seguro</h2>
+              <p className="text-muted">
+                Aceitamos pagamento por <strong>PIX, Cartão de Crédito e Débito</strong> via Mercado Pago.
+              </p>
               <Form onSubmit={handlePayment}>
                 <Form.Group controlId="formEmail" className="mb-3">
                   <Form.Label>E-mail</Form.Label>
@@ -77,7 +78,9 @@ function TermosDeUso() {
                     name="payerEmail"
                     placeholder="Digite seu e-mail"
                     value={paymentData.payerEmail}
-                    onChange={(e) => setPaymentData({ ...paymentData, payerEmail: e.target.value })}
+                    onChange={(e) =>
+                      setPaymentData({ ...paymentData, payerEmail: e.target.value })
+                    }
                     required
                   />
                 </Form.Group>
@@ -87,9 +90,11 @@ function TermosDeUso() {
                   <Form.Control
                     type="text"
                     name="payerName"
-                    placeholder="Digite seu nome"
+                    placeholder="Digite seu nome completo"
                     value={paymentData.payerName}
-                    onChange={(e) => setPaymentData({ ...paymentData, payerName: e.target.value })}
+                    onChange={(e) =>
+                      setPaymentData({ ...paymentData, payerName: e.target.value })
+                    }
                     required
                   />
                 </Form.Group>

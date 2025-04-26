@@ -64,7 +64,6 @@ function Detalhes() {
             setShowModal(false);
             setShowPaymentModal(false);
             setEmail('');
-
         } catch (error) {
             console.error('Erro:', error);
             setError('Erro ao enviar o e-mail. Tente novamente.');
@@ -102,9 +101,8 @@ function Detalhes() {
             const result = await response.json();
             if (result.success) {
                 alert('Pagamento realizado com sucesso!');
-                setIsPaid(true);
+                setIsPaid(true); // Atualiza o estado de pagamento
                 setShowPaymentModal(false);
-                handleSendEmail(true);
             } else {
                 alert('Erro ao processar o pagamento. Tente novamente.');
             }
@@ -125,6 +123,14 @@ function Detalhes() {
     const abrirPagamento = () => {
         setIsPaid(true);
         setShowPaymentModal(true);
+    };
+
+    const handleReceberPDF = () => {
+        if (!isPaid) {
+            alert('Você precisa pagar para receber o relatório completo.');
+            return;
+        }
+        handleSendEmail(true);
     };
 
     if (!calorias || !dadosFormulario) {
@@ -152,6 +158,13 @@ function Detalhes() {
                     <Button className='meubutton' onClick={abrirPagamento} variant="secondary">
                         Adquirir Relatório Completo 🔥
                     </Button>
+
+                    {/* Botão de "Receber PDF" visível apenas após pagamento */}
+                    {isPaid && (
+                        <Button className='meubutton' onClick={handleReceberPDF} variant="success">
+                            Receber Relatório Completo
+                        </Button>
+                    )}
                 </div>
 
                 <Button className='meubutton' onClick={() => navigate('/')} variant="primary">
