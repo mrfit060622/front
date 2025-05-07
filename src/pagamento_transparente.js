@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-function TermosDeUso() {
+function Pagamento() {
   useEffect(() => {
     const { REACT_APP_API_HOST, REACT_APP_CHAVE_MP } = process.env;
 
@@ -149,4 +149,4 @@ function TermosDeUso() {
   );
 }
 
-export default TermosDeUso;
+export default Pagamento;

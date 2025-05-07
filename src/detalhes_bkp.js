@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Container, Card, Button, Modal, Form} from 'react-bootstrap';
-import Pagamento from './pagamento';
 
 const niveisAtividade = {
     "1": "Sedentário - Pouca ou nenhuma atividade física regular",
@@ -25,12 +24,11 @@ function Detalhes() {
     const [email, setEmail] = useState('');
     const [isPaid, setIsPaid] = useState(false);
     const [loading, setLoading] = useState(false); // Estado para evitar múltiplos envios
-    const [showPagamento, setShowPagamento] = useState(false);
-    
-    const handleEmailChange = (e) => setEmail(e.target.value);
-    const valorPagamento = 19.9; 
 
-    // Função para enviar o email
+    const handleEmailChange = (e) => setEmail(e.target.value);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+
     const handleSendEmail = async () => {
         if (loading) return;
         setLoading(true);
@@ -38,7 +36,7 @@ function Detalhes() {
         const endpoint = isPaid 
             ? `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`
             : `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf`;
-
+    
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -57,31 +55,20 @@ function Detalhes() {
                 }),
                 credentials: 'include', // Garantir que os cookies sejam enviados
             });
-
+    
             if (!response.ok) throw new Error('Erro ao enviar o e-mail');
-
+    
             const result = await response.json();
             alert(result.message || 'PDF enviado com sucesso!');
             setShowModal(false);
             setEmail('');
+    
         } catch (error) {
             console.error('Erro:', error);
             alert('Erro ao enviar o e-mail. Tente novamente.');
         } finally {
             setLoading(false);
         }
-    };
-
-    // Função para lidar com o pagamento
-    const handlePagamento = () => {
-        setShowPagamento(true); // Abre a tela de pagamento
-    };
-
-    // Função para confirmar o pagamento
-    const onPagamentoConfirmado = () => {
-        setIsPaid(true); // Marca como pago
-        setShowPagamento(false); // Fecha o modal de pagamento
-        setShowModal(true); // Abre o modal para enviar o e-mail após pagamento
     };
 
     if (!calorias || !dadosFormulario) {
@@ -102,7 +89,6 @@ function Detalhes() {
                 <h3>Calorias Necessárias: {calorias}</h3>
 
                 <div className="d-flex flex-column align-items-center mt-3">
-                    {/* Botão para enviar o resumo nutricional sem pagamento */}
                     <Button 
                         className='meubutton' 
                         onClick={() => { setIsPaid(false); setShowModal(true); }} 
@@ -111,10 +97,9 @@ function Detalhes() {
                         Resumo Nutricional 🥗
                     </Button>
 
-                    {/* Botão para abrir o pagamento e adquirir o relatório completo */}
                     <Button 
                         className='meubutton' 
-                        onClick={handlePagamento} 
+                        onClick={() => { setIsPaid(true); setShowModal(true); }} 
                         variant="secondary"
                     >
                         Adquirir Relatório Completo 🔥
@@ -124,7 +109,6 @@ function Detalhes() {
                 <Button className='meubutton' onClick={() => navigate('/')} variant="primary">Voltar</Button>
             </Card>
 
-            {/* Modal para enviar o e-mail */}
             <Modal show={showModal} onHide={() => setShowModal(false)}>
                 <Modal.Header closeButton>
                     <Modal.Title>Enviar Resumo Nutricional</Modal.Title>
@@ -156,26 +140,6 @@ function Detalhes() {
                     </Button>
                 </Modal.Footer>
             </Modal>
-
-            {/* Modal de pagamento */}
-            {showPagamento && (
-                <Pagamento
-                    show={showPagamento}
-                    onHide={() => setShowPagamento(false)}
-                    payerName={dadosFormulario.nome}
-                    payerEmail={dadosFormulario.email}
-                    valor={valorPagamento}
-                    descricao="Relatório Nutricional Completo"
-                    idade={dadosFormulario.idade}
-                    peso={dadosFormulario.peso}
-                    altura={dadosFormulario.altura}
-                    sexo={dadosFormulario.sexo}
-                    atividade={dadosFormulario.atividade}
-                    objetivo={dadosFormulario.objetivo}
-                    calorias={calorias}
-                    onPagamentoConfirmado={onPagamentoConfirmado}
-                />
-            )}
         </Container>
     );
 }

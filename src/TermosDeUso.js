@@ -1,129 +1,73 @@
-import React, { useState } from 'react';
-import { Container, Row, Col, Card, Button, Form, Spinner, Alert } from 'react-bootstrap';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Container } from 'react-bootstrap';
 
-function TermosDeUso() {
-  const valorPagamento = 1.0;
-  const [paymentData, setPaymentData] = useState({
-    transactionAmount: valorPagamento,
-    description: 'Plano de Acompanhamento',
-    payerEmail: '',
-    payerName: '',
-    paymentMethod: 'pix', // Essa chave pode ser usada no futuro se você quiser definir preferências específicas
-  });
-
-  const [paymentStatus, setPaymentStatus] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  const handlePayment = async (e) => {
-    e.preventDefault();
-
-    if (!paymentData.payerEmail || !paymentData.payerName) {
-      setPaymentStatus('❌ Preencha todos os campos para continuar.');
-      return;
-    }
-
-    if (paymentData.transactionAmount <= 0) {
-      setPaymentStatus('❌ Valor do pagamento inválido.');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setPaymentStatus('🔄 Gerando link de pagamento...');
-
-      const resposta = await axios.post(
-        `${process.env.REACT_APP_API_HOST}/pagamento/checkout`,
-        paymentData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const { status, init_point } = resposta.data;
-
-      if (status === 'success' && init_point) {
-        setPaymentStatus('✅ Redirecionando para o Mercado Pago...');
-        window.location.href = init_point;
-      } else {
-        setPaymentStatus('❌ Erro ao iniciar pagamento. Tente novamente.');
-      }
-    } catch (error) {
-      console.error('Erro no pagamento:', error);
-      setPaymentStatus('❌ Erro ao iniciar pagamento. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+function Termos() {
   return (
-    <Container className="d-flex justify-content-center align-items-center py-5">
-      <Row>
-        <Col>
-          <Card>
-            <Card.Body>
-              <h2 className="meutitle mb-4">💳 Pagamento Seguro</h2>
-              <p className="text-muted">
-                Aceitamos pagamento por <strong>PIX, Cartão de Crédito e Débito</strong> via Mercado Pago.
-              </p>
-              <Form onSubmit={handlePayment}>
-                <Form.Group controlId="formEmail" className="mb-3">
-                  <Form.Label>E-mail</Form.Label>
-                  <Form.Control
-                    type="email"
-                    name="payerEmail"
-                    placeholder="Digite seu e-mail"
-                    value={paymentData.payerEmail}
-                    onChange={(e) =>
-                      setPaymentData({ ...paymentData, payerEmail: e.target.value })
-                    }
-                    required
-                  />
-                </Form.Group>
+    <div>
+      <Container>
+        <h2 className="text-center mt-4 mb-4">Termos de Uso do Site MrFit</h2>
 
-                <Form.Group controlId="formNome" className="mb-3">
-                  <Form.Label>Nome</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="payerName"
-                    placeholder="Digite seu nome completo"
-                    value={paymentData.payerName}
-                    onChange={(e) =>
-                      setPaymentData({ ...paymentData, payerName: e.target.value })
-                    }
-                    required
-                  />
-                </Form.Group>
+        <h4>1. Introdução</h4>
+        <p>
+          Bem-vindo ao site <strong>MrFit</strong>. Ao acessar e utilizar nossos serviços, 
+          você concorda com os termos e condições descritos abaixo. Caso não concorde, pedimos 
+          que não utilize o site.
+        </p>
 
-                <Form.Group controlId="formValor" className="mb-3">
-                  <Form.Label>Valor a Pagar</Form.Label>
-                  <Form.Control
-                    type="text"
-                    readOnly
-                    value={`R$ ${paymentData.transactionAmount.toFixed(2)}`}
-                  />
-                </Form.Group>
+        <h4>2. Objetivo do Site</h4>
+        <p>
+          O <strong>MrFit</strong> tem como objetivo fornecer ferramentas para cálculo de calorias, 
+          planos nutricionais e dicas de saúde e bem-estar. As informações disponibilizadas não 
+          substituem a orientação profissional de nutricionistas ou médicos.
+        </p>
 
-                <Button variant="primary" type="submit" disabled={loading} className="meubutton">
-                  {loading ? <Spinner animation="border" size="sm" /> : 'Pagar Agora'}
-                </Button>
-              </Form>
+        <h4>3. Coleta e Uso de Dados</h4>
+        <ul>
+          <li>
+            <strong>3.1.</strong> Ao utilizar nossos serviços, podemos coletar informações como nome e e-mail para envio de promoções e novidades.
+          </li>
+          <li>
+            <strong>3.2.</strong> Os dados coletados serão armazenados com segurança e não serão compartilhados com terceiros sem autorização prévia.
+          </li>
+          <li>
+            <strong>3.3.</strong> Você pode solicitar a remoção do seu e-mail de nossa base de dados a qualquer momento.
+          </li>
+        </ul>
 
-              {paymentStatus && (
-                <Alert className="mt-4" variant="info">
-                  {paymentStatus}
-                </Alert>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+        <h4>4. Propriedade Intelectual</h4>
+        <p>
+          Todo o conteúdo do site, incluindo textos, imagens e cálculos, é protegido por direitos 
+          autorais e não pode ser reproduzido sem permissão.
+        </p>
+
+        <h4>5. Isenção de Responsabilidade</h4>
+        <ul>
+          <li>
+            <strong>5.1.</strong> O <strong>MrFit</strong> não se responsabiliza por eventuais danos causados pelo uso das informações do site.
+          </li>
+          <li>
+            <strong>5.2.</strong> Os resultados podem variar de pessoa para pessoa e dependem de diversos fatores individuais.
+          </li>
+        </ul>
+
+        <h4>6. Modificações dos Termos</h4>
+        <p>
+          Estes termos podem ser alterados a qualquer momento, sendo responsabilidade do usuário revisar as atualizações.
+        </p>
+
+        <h4>7. Contato</h4>
+        <p>
+          Para dúvidas ou solicitações, entre em contato pelo e-mail: 
+          <a href="mailto:suporte@mrfit.com.br"> suporte@mrfit.com.br</a>.
+        </p>
+
+        <h4>8. Aceitação dos Termos</h4>
+        <p>
+          O uso do site implica na aceitação integral destes Termos de Uso.
+        </p>
+      </Container>
+    </div>
   );
 }
 
-export default TermosDeUso;
+export default Termos;
