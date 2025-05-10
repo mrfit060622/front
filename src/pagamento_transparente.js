@@ -91,6 +91,8 @@ function Pagamento() {
               });
 
               const data = await response.json();
+              setExternalReference(result.external_reference);
+              setShowPagamento(true);
               console.log("✅ Pagamento processado:", data);
               alert("Pagamento realizado com sucesso!");
             } catch (error) {
