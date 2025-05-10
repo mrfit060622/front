@@ -8,7 +8,7 @@ function Pagamento({ show, onHide, valor = 1.0, descricao = 'Relatório Nutricio
     description: descricao,
     payerEmail: '',
     payerName: '',
-    paymentMethod: 'pix',
+    paymentMethod: '',
     idade:idade,
     peso:peso,
     altura:altura,
