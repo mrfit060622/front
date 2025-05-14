@@ -87,8 +87,7 @@ function Detalhes() {
           altura: dadosFormulario.altura,
           sexo: dadosFormulario.sexo === 'm' ? 'Masculino' : 'Feminino',
           atividade: niveisAtividade[dadosFormulario.atividade],
-          objetivo: objetivosMap[dadosFormulario.objetivo],
-          data: new Date().toLocaleDateString(),
+          objetivo: objetivosMap[dadosFormulario.objetivo]
         })
       });
 
