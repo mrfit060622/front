@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Container, Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import Pagamento from './pagamento';
+import CheckoutBricks from './CheckoutBricks';
 
 const niveisAtividade = {
   "1": "Sedentário - Pouca ou nenhuma atividade física regular",
@@ -20,30 +20,30 @@ const objetivosMap = {
 function Detalhes() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { calorias: stateCalorias, dadosFormulario: stateDados } = location.state || {};
-
   const [searchParams] = useSearchParams();
-  const referenceFromURL = searchParams.get("ref");
 
-  const [calorias, setCalorias] = useState(stateCalorias);
-  const [dadosFormulario, setDadosFormulario] = useState(stateDados);
-  const [showModal, setShowModal] = useState(false);
+  const [calorias, setCalorias] = useState(null);
+  const [dadosFormulario, setDadosFormulario] = useState(null);
   const [email, setEmail] = useState('');
   const [isPaid, setIsPaid] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [showPagamento, setShowPagamento] = useState(false);
   const [externalReference, setExternalReference] = useState(null);
-  const [checkingStatus, setCheckingStatus] = useState(false);
-  const valorPagamento = 0.25;
 
-  // 🧠 Carrega dados do backend pela referência se estiver vindo por URL
+  const valorPagamento = 0.25;
+  const referenceFromURL = searchParams.get("ref");
+
+  // Carregar dados do location ou da API (apenas uma vez)
   useEffect(() => {
-    if (!dadosFormulario && referenceFromURL) {
+    if (location.state?.dadosFormulario && location.state?.calorias) {
+      setDadosFormulario(location.state.dadosFormulario);
+      setCalorias(location.state.calorias);
+    } else if (referenceFromURL) {
       fetch(`${process.env.REACT_APP_API_HOST}/pdf/consulta_pdf/${referenceFromURL}`)
         .then(res => res.json())
         .then(data => {
-          setIsPaid(true);
-          setExternalReference(referenceFromURL);
           setDadosFormulario({
             nome: data.nome,
             idade: data.idade,
@@ -51,20 +51,22 @@ function Detalhes() {
             altura: data.altura,
             sexo: data.sexo,
             atividade: Object.keys(niveisAtividade).find(key => niveisAtividade[key] === data.atividade),
-            objetivo: Object.keys(objetivosMap).find(key => objetivosMap[key] === data.objetivo)
+            objetivo: Object.keys(objetivosMap).find(key => objetivosMap[key] === data.objetivo),
           });
           setCalorias(data.calorias);
+          setExternalReference(referenceFromURL);
+          setIsPaid(true);
         })
         .catch(err => {
           console.error("Erro ao buscar dados:", err);
         });
     }
-  }, [referenceFromURL, dadosFormulario]);
+  }, [location.state, referenceFromURL]);
 
   const handleEmailChange = (e) => setEmail(e.target.value);
 
   const handleSendEmail = async () => {
-    if (loading) return;
+    if (loading || !dadosFormulario) return;
     setLoading(true);
 
     const endpoint = isPaid
@@ -78,14 +80,14 @@ function Detalhes() {
         credentials: 'include',
         body: JSON.stringify({
           email,
-          nome: dadosFormulario?.nome,
+          nome: dadosFormulario.nome,
           calorias,
-          idade: dadosFormulario?.idade,
-          peso: dadosFormulario?.peso,
-          altura: dadosFormulario?.altura,
-          sexo: dadosFormulario?.sexo === 'm' ? 'Masculino' : 'Feminino',
-          atividade: niveisAtividade[dadosFormulario?.atividade],
-          objetivo: objetivosMap[dadosFormulario?.objetivo],
+          idade: dadosFormulario.idade,
+          peso: dadosFormulario.peso,
+          altura: dadosFormulario.altura,
+          sexo: dadosFormulario.sexo === 'm' ? 'Masculino' : 'Feminino',
+          atividade: niveisAtividade[dadosFormulario.atividade],
+          objetivo: objetivosMap[dadosFormulario.objetivo],
           data: new Date().toLocaleDateString(),
         })
       });
@@ -171,7 +173,9 @@ function Detalhes() {
           </Button>
         </div>
 
-        <Button className='meubutton' onClick={() => navigate('/')} variant="primary">Voltar</Button>
+        <Button className='meubutton mt-3' onClick={() => navigate('/')} variant="primary">
+          Voltar
+        </Button>
       </Card>
 
       {/* Modal de envio de email */}
@@ -193,20 +197,18 @@ function Detalhes() {
       </Modal>
 
       {/* Modal de pagamento */}
-      <Pagamento
-        show={showPagamento}
-        onHide={() => setShowPagamento(false)}
-        valor={valorPagamento}
-        descricao="Relatório Nutricional Completo"
-        idade={dadosFormulario.idade}
-        peso={dadosFormulario.peso}
-        altura={dadosFormulario.altura}
-        sexo={dadosFormulario.sexo}
-        atividade={niveisAtividade[dadosFormulario.atividade]}
-        objetivo={objetivosMap[dadosFormulario.objetivo]}
-        calorias={calorias}
-        onPagamentoConfirmado={onPagamentoConfirmado}
-      />
+      <Modal show={showPagamento} onHide={() => setShowPagamento(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Relatório Nutricional Completo</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <CheckoutBricks
+            valor={valorPagamento}
+            descricao="Relatório Nutricional Completo"
+            onPagamentoConfirmado={onPagamentoConfirmado}
+          />
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 }

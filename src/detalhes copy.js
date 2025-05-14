@@ -1,26 +1,32 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Container, Card, Button, Modal, Form,Spinner} from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Container, Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import Pagamento from './pagamento';
 
 const niveisAtividade = {
-    "1": "Sedentário - Pouca ou nenhuma atividade física regular",
-    "2": "Levemente Ativo - Treinos leves 1 a 2 vezes por semana",
-    "3": "Moderadamente Ativo - Exercícios regulares 3 a 4 vezes por semana",
-    "4": "Muito Ativo - Treinos intensos 5 a 6 vezes por semana",
-    "5": "Extremamente Ativo - Exercícios diários com alta intensidade"
+  "1": "Sedentário - Pouca ou nenhuma atividade física regular",
+  "2": "Levemente Ativo - Treinos leves 1 a 2 vezes por semana",
+  "3": "Moderadamente Ativo - Exercícios regulares 3 a 4 vezes por semana",
+  "4": "Muito Ativo - Treinos intensos 5 a 6 vezes por semana",
+  "5": "Extremamente Ativo - Exercícios diários com alta intensidade"
 };
 
 const objetivosMap = {
-    "1": "Manter Peso - Consumo calórico equilibrado",
-    "2": "Ganhar Massa Muscular - Excedente calórico com foco em proteínas",
-    "3": "Emagrecer - Déficit calórico para perda de gordura"
+  "1": "Manter Peso - Consumo calórico equilibrado",
+  "2": "Ganhar Massa Muscular - Excedente calórico com foco em proteínas",
+  "3": "Emagrecer - Déficit calórico para perda de gordura"
 };
 
 function Detalhes() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { calorias, dadosFormulario } = location.state || {}; 
+  const { calorias: stateCalorias, dadosFormulario: stateDados } = location.state || {};
+
+  const [searchParams] = useSearchParams();
+  const referenceFromURL = searchParams.get("ref");
+
+  const [calorias, setCalorias] = useState(stateCalorias);
+  const [dadosFormulario, setDadosFormulario] = useState(stateDados);
   const [showModal, setShowModal] = useState(false);
   const [email, setEmail] = useState('');
   const [isPaid, setIsPaid] = useState(false);
@@ -28,21 +34,48 @@ function Detalhes() {
   const [showPagamento, setShowPagamento] = useState(false);
   const [externalReference, setExternalReference] = useState(null);
   const [checkingStatus, setCheckingStatus] = useState(false);
-  const handleEmailChange = (e) => setEmail(e.target.value);
   const valorPagamento = 0.25;
+
+  // 🧠 Carrega dados do backend pela referência se estiver vindo por URL
+  useEffect(() => {
+    if (!dadosFormulario && referenceFromURL) {
+      fetch(`${process.env.REACT_APP_API_HOST}/pdf/consulta_pdf/${referenceFromURL}`)
+        .then(res => res.json())
+        .then(data => {
+          setIsPaid(true);
+          setExternalReference(referenceFromURL);
+          setDadosFormulario({
+            nome: data.nome,
+            idade: data.idade,
+            peso: data.peso,
+            altura: data.altura,
+            sexo: data.sexo,
+            atividade: Object.keys(niveisAtividade).find(key => niveisAtividade[key] === data.atividade),
+            objetivo: Object.keys(objetivosMap).find(key => objetivosMap[key] === data.objetivo)
+          });
+          setCalorias(data.calorias);
+        })
+        .catch(err => {
+          console.error("Erro ao buscar dados:", err);
+        });
+    }
+  }, [referenceFromURL, dadosFormulario]);
+
+  const handleEmailChange = (e) => setEmail(e.target.value);
 
   const handleSendEmail = async () => {
     if (loading) return;
     setLoading(true);
 
-    const endpoint = isPaid 
-        ? `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`
-        : `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf`;
+    const endpoint = isPaid
+      ? `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`
+      : `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf`;
 
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           email,
           nome: dadosFormulario?.nome,
@@ -54,12 +87,12 @@ function Detalhes() {
           atividade: niveisAtividade[dadosFormulario?.atividade],
           objetivo: objetivosMap[dadosFormulario?.objetivo],
           data: new Date().toLocaleDateString(),
-        }),
-        credentials: 'include',
+        })
       });
 
-      if (!response.ok) throw new Error('Erro ao enviar o e-mail');
       const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Erro ao enviar');
+
       alert(result.message || 'PDF enviado com sucesso!');
       setShowModal(false);
       setEmail('');
@@ -82,7 +115,6 @@ function Detalhes() {
     setShowModal(true);
   };
 
-  // 🔍 Consulta do status do pagamento
   const verificarStatusPagamento = async () => {
     if (!externalReference) {
       alert("Pagamento não iniciado ou referência ausente.");
@@ -96,7 +128,7 @@ function Detalhes() {
 
       if (data.status === "approved") {
         setIsPaid(true);
-        setShowModal(true); // Abre modal de envio
+        setShowModal(true);
       } else {
         alert("Pagamento ainda não confirmado. Tente novamente mais tarde.");
       }
@@ -134,7 +166,6 @@ function Detalhes() {
             Adquirir Relatório Completo 🔥
           </Button>
 
-          {/* ✅ Botão com verificação de pagamento */}
           <Button className='meubutton' onClick={verificarStatusPagamento} variant="secondary" disabled={checkingStatus}>
             {checkingStatus ? "Verificando pagamento..." : "Enviar Relatório Completo via e-mail 🔥"}
           </Button>
@@ -174,7 +205,9 @@ function Detalhes() {
         atividade={niveisAtividade[dadosFormulario.atividade]}
         objetivo={objetivosMap[dadosFormulario.objetivo]}
         calorias={calorias}
+        onPagamentoConfirmado={onPagamentoConfirmado}
       />
+      
     </Container>
   );
 }
