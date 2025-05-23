@@ -55,13 +55,11 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
               onReady: () => {
                 setLoading(false);
               },
-              onSubmit: async (data) => {
+              onSubmit: async (formData) => {
   try {
-    console.log("Dados recebidos no onSubmit:", data);
+    console.log("Dados recebidos no onSubmit:", formData);
 
-    const formData = data?.formData;
-
-    if (!formData) {
+    if (!formData || !formData.token) {
       throw new Error('Dados do formulário de pagamento não encontrados.');
     }
 
@@ -69,26 +67,26 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        valor: valorPagamento,
+        valor: valor >= 1 ? valor : 1,
         dados_pagamento: formData,
         relatorio,
       }),
     });
 
-    const responseData = await response.json();
-    console.log("Resposta do backend:", responseData);
+    const data = await response.json();
 
-    if (responseData.status === 'approved') {
-      onPagamentoConfirmado(responseData.external_reference || responseData.status);
+    if (data.status === 'approved') {
+      onPagamentoConfirmado(data.external_reference || data.status);
     } else {
-      setErroCheckout(`Pagamento recusado: ${responseData.status_detail || responseData.status}`);
+      setErroCheckout(`Pagamento recusado: ${data.status_detail || data.status}`);
     }
 
   } catch (error) {
     console.error('Erro ao processar pagamento:', error);
     setErroCheckout('Erro ao finalizar o pagamento. Tente novamente.');
   }
-},
+}
+,
 
               onError: (error) => {
                 console.error('Erro no Brick:', error);
