@@ -83,9 +83,6 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
   }),
 });
 
-    if (!response.ok) {
-      throw new Error('Erro ao processar pagamento.');
-    }
 
     const data = await response.json();
 
