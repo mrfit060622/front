@@ -64,14 +64,28 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
     }
 
     const response = await fetch(`${process.env.REACT_APP_API_HOST}/pagamento/criar_pagamento`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        valor: valor >= 1 ? valor : 1,
-        dados_pagamento: formData,
-        relatorio,
-      }),
-    });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    valor: valor >= 1 ? valor : 1,
+    token: formData.token,
+    parcelamento: formData.parcelamento,
+    metodo_pagamento: formData.metodo_pagamento,
+    payer: {
+      email: formData.email,
+      nome: formData.nome,
+      identification: {
+        tp_doc: formData.tp_doc,
+        nr_cpf: formData.nr_cpf
+      }
+    },
+    relatorio
+  }),
+});
+
+    if (!response.ok) {
+      throw new Error('Erro ao processar pagamento.');
+    }
 
     const data = await response.json();
 
