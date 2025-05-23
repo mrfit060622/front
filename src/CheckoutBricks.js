@@ -57,25 +57,16 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
               },
               onSubmit: async ({ formData }) => {
                 try {
+                  console.log ("formData Recebido: ", formData);  
                   const response = await fetch(`${process.env.REACT_APP_API_HOST}/pagamento/criar_pagamento`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      valor: valorPagamento,
-                      token: formData.token, // o Brick já gera isso internamente
-                      parcelamento: formData.installments,
-                      metodo_pagamento: formData.paymentMethodId,
-                      payer: {
-                        email: formData.payer.email,
-                        nome: formData.cardholderName,
-                        identification: {
-                          tp_doc: formData.payer.identification.type,
-                          nr_cpf: formData.payer.identification.number,
-                        },
-                      },
-                      relatorio,
-                    }),
-                  });
+                          method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        valor: valor >= 1 ? valor : 1,
+        dados_pagamento: formData,
+        relatorio,
+      }),
+    });
 
                   const data = await response.json();
                   onPagamentoConfirmado(data.external_reference || data.status);
