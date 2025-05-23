@@ -63,7 +63,7 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
       throw new Error('Dados do formulário de pagamento não encontrados.');
     }
 
-    const response = await fetch(`${process.env.REACT_APP_API_HOST}/pagamento/criar_pagamento`, {
+  const response = await fetch(`${process.env.REACT_APP_API_HOST}/pagamento/criar_pagamento`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -83,6 +83,7 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
   }),
 });
 
+console.log("Respota API:", response, relatorio);
 
     const data = await response.json();
 
