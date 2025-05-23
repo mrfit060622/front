@@ -57,22 +57,34 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
               },
               onSubmit: async ({ formData }) => {
                 try {
-                  console.log ("formData Recebido: ", formData);  
+                  if (!formData) {
+                    throw new Error('Dados do formulário de pagamento não encontrados.');
+                  }
+
                   const response = await fetch(`${process.env.REACT_APP_API_HOST}/pagamento/criar_pagamento`, {
-                          method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        valor: valor >= 1 ? valor : 1,
-        dados_pagamento: formData,
-        relatorio,
-      }),
-    });
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      valor: valorPagamento,
+                      dados_pagamento: formData,
+                      relatorio,
+                    }),
+                  });
 
                   const data = await response.json();
-                  onPagamentoConfirmado(data.external_reference || data.status);
+
+                  console.log("Resposta do backend:", data);
+
+                  // Valida se o pagamento foi realmente aprovado
+                  if (data.status === 'approved') {
+                    onPagamentoConfirmado(data.external_reference || data.status);
+                  } else {
+                    setErroCheckout(`Pagamento recusado: ${data.status_detail || data.status}`);
+                  }
+
                 } catch (error) {
                   console.error('Erro ao processar pagamento:', error);
-                  setErroCheckout('Erro ao finalizar pagamento.');
+                  setErroCheckout('Erro ao finalizar o pagamento. Tente novamente.');
                 }
               },
               onError: (error) => {
