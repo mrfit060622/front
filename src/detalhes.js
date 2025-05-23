@@ -21,7 +21,6 @@ function Detalhes() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
   const [calorias, setCalorias] = useState(null);
   const [dadosFormulario, setDadosFormulario] = useState(null);
   const [email, setEmail] = useState('');
@@ -40,6 +39,8 @@ function Detalhes() {
     if (location.state?.dadosFormulario && location.state?.calorias) {
       setDadosFormulario(location.state.dadosFormulario);
       setCalorias(location.state.calorias);
+      sessionStorage.setItem('dadosFormulario', JSON.stringify(location.state.dadosFormulario));
+      sessionStorage.setItem('calorias', location.state.calorias);
     } else if (referenceFromURL) {
       fetch(`${process.env.REACT_APP_API_HOST}/pdf/consulta_pdf/${referenceFromURL}`)
         .then(res => res.json())
@@ -60,6 +61,13 @@ function Detalhes() {
         .catch(err => {
           console.error("Erro ao buscar dados:", err);
         });
+    } else {
+      const storedDadosFormulario = sessionStorage.getItem('dadosFormulario');
+      const storedCalorias = sessionStorage.getItem('calorias');
+      if (storedDadosFormulario && storedCalorias) {
+        setDadosFormulario(JSON.parse(storedDadosFormulario));
+        setCalorias(storedCalorias);
+      }
     }
   }, [location.state, referenceFromURL]);
 
