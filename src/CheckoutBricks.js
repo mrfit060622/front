@@ -55,38 +55,41 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
               onReady: () => {
                 setLoading(false);
               },
-              onSubmit: async ({ formData }) => {
-                try {
-                  if (!formData) {
-                    throw new Error('Dados do formulário de pagamento não encontrados.');
-                  }
+              onSubmit: async (data) => {
+  try {
+    console.log("Dados recebidos no onSubmit:", data);
 
-                  const response = await fetch(`${process.env.REACT_APP_API_HOST}/pagamento/criar_pagamento`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      valor: valorPagamento,
-                      dados_pagamento: formData,
-                      relatorio,
-                    }),
-                  });
+    const formData = data?.formData;
 
-                  const data = await response.json();
+    if (!formData) {
+      throw new Error('Dados do formulário de pagamento não encontrados.');
+    }
 
-                  console.log("Resposta do backend:", data);
+    const response = await fetch(`${process.env.REACT_APP_API_HOST}/pagamento/criar_pagamento`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        valor: valorPagamento,
+        dados_pagamento: formData,
+        relatorio,
+      }),
+    });
 
-                  // Valida se o pagamento foi realmente aprovado
-                  if (data.status === 'approved') {
-                    onPagamentoConfirmado(data.external_reference || data.status);
-                  } else {
-                    setErroCheckout(`Pagamento recusado: ${data.status_detail || data.status}`);
-                  }
+    const responseData = await response.json();
+    console.log("Resposta do backend:", responseData);
 
-                } catch (error) {
-                  console.error('Erro ao processar pagamento:', error);
-                  setErroCheckout('Erro ao finalizar o pagamento. Tente novamente.');
-                }
-              },
+    if (responseData.status === 'approved') {
+      onPagamentoConfirmado(responseData.external_reference || responseData.status);
+    } else {
+      setErroCheckout(`Pagamento recusado: ${responseData.status_detail || responseData.status}`);
+    }
+
+  } catch (error) {
+    console.error('Erro ao processar pagamento:', error);
+    setErroCheckout('Erro ao finalizar o pagamento. Tente novamente.');
+  }
+},
+
               onError: (error) => {
                 console.error('Erro no Brick:', error);
                 setErroCheckout('Erro ao carregar o método de pagamento.');
