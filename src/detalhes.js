@@ -125,30 +125,30 @@ function Detalhes() {
     setShowModal(true);
   };
 
-  const verificarStatusPagamento = async () => {
-    if (!externalReference) {
-      alert("Pagamento não iniciado ou referência ausente.");
-      return;
-    }
+  // const verificarStatusPagamento = async () => {
+  //   if (!externalReference) {
+  //     alert("Pagamento não iniciado ou referência ausente.");
+  //     return;
+  //   }
 
-    try {
-      setCheckingStatus(true);
-      const resposta = await fetch(`${process.env.REACT_APP_API_HOST}/pagamento/status/${externalReference}`);
-      const data = await resposta.json();
+  //   try {
+  //     setCheckingStatus(true);
+  //     const resposta = await fetch(`${process.env.REACT_APP_API_HOST}/pagamento/status/${externalReference}`);
+  //     const data = await resposta.json();
 
-      if (data.status === "approved") {
-        setIsPaid(true);
-        setShowModal(true);
-      } else {
-        alert("Pagamento ainda não confirmado. Tente novamente mais tarde.");
-      }
-    } catch (erro) {
-      console.error("Erro ao verificar status:", erro);
-      alert("Erro ao verificar o status do pagamento.");
-    } finally {
-      setCheckingStatus(false);
-    }
-  };
+  //     if (data.status === "approved") {
+  //       setIsPaid(true);
+  //       setShowModal(true);
+  //     } else {
+  //       alert("Pagamento ainda não confirmado. Tente novamente mais tarde.");
+  //     }
+  //   } catch (erro) {
+  //     console.error("Erro ao verificar status:", erro);
+  //     alert("Erro ao verificar o status do pagamento.");
+  //   } finally {
+  //     setCheckingStatus(false);
+  //   }
+  // };
 
   if (!calorias || !dadosFormulario) {
     return <p>Erro: Nenhum dado recebido.</p>;
@@ -176,9 +176,6 @@ function Detalhes() {
             Adquirir Relatório Completo 🔥
           </Button>
 
-          <Button className='meubutton' onClick={verificarStatusPagamento} variant="secondary" disabled={checkingStatus}>
-            {checkingStatus ? "Verificando pagamento..." : "Enviar Relatório Completo via e-mail 🔥"}
-          </Button>
         </div>
 
         <Button className='meubutton mt-3' onClick={() => navigate('/')} variant="primary">
