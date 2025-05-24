@@ -87,7 +87,7 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
                   const data = await response.json();
                   console.log('Resposta da API:', data);
 
-                  if (response.ok && data.status === 'approved') {
+                  if (response.ok && data.status === 'success') {
                     onPagamentoConfirmado(data.external_reference || data.status);
                   } else {
                     const erroMsg = data.erro || data.message || 'Pagamento recusado.';
