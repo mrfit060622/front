@@ -55,13 +55,11 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
                 try {
                   console.log('Dados recebidos do Brick:', formData);
 
-                  if (
-                    !formData.token ||
-                    !formData.payer?.email ||
-                    !formData.payer?.name ||
-                    !formData.payer?.identification?.type ||
-                    !formData.payer?.identification?.number
-                  ) {
+                  const { token, payment_method_id, issuer_id, transaction_amount, installments, payer } = formData;
+
+                  console.log('Dados para pagamento:', { token, payment_method_id, issuer_id, transaction_amount, installments, payer });
+
+                  if (!token || !payer?.email || !payer?.identification?.type || !payer?.identification?.number) {
                     throw new Error('Dados obrigatórios ausentes para o pagamento.');
                   }
 
@@ -69,16 +67,17 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      valor: valorPagamento,
-                      token: formData.token,
-                      parcelamento: formData.parcelamento,
-                      metodo_pagamento: formData.metodo_pagamento,
+                      valor: transaction_amount,
+                      token,
+                      parcelamento: installments,
+                      metodo_pagamento: payment_method_id,
+                      issuer_id,
                       payer: {
-                        email: formData.payer.email,
-                        nome: formData.payer.name,
+                        email: payer.email,
+                        nome: '', // Nome não está vindo do Brick, então será vazio ou você pode adicionar um input extra se for obrigatório
                         identification: {
-                          tp_doc: formData.payer.identification.type,
-                          nr_cpf: formData.payer.identification.number,
+                          tp_doc: payer.identification.type,
+                          nr_cpf: payer.identification.number,
                         },
                       },
                       relatorio,
