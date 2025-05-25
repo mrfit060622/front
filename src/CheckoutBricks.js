@@ -106,7 +106,7 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio }) 
           });
 
           brickInstanceRef.current = brickInstance;
-        }
+        } 
       } catch (error) {
         console.error('Erro geral no Checkout:', error);
         setErroCheckout('Erro ao iniciar o checkout.');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Container, Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
+import { Container, Card, Button, Modal, Form, Spinner, Alert } from 'react-bootstrap';
 import CheckoutBricks from './CheckoutBricks';
 
 const niveisAtividade = {
@@ -17,16 +17,20 @@ const objetivosMap = {
   "3": "Emagrecer - Déficit calórico para perda de gordura"
 };
 
+const isEmailValid = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 function Detalhes() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
   const [calorias, setCalorias] = useState(null);
   const [dadosFormulario, setDadosFormulario] = useState(null);
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [feedbackMsg, setFeedbackMsg] = useState('');
   const [isPaid, setIsPaid] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [checkingStatus, setCheckingStatus] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showPagamento, setShowPagamento] = useState(false);
   const [externalReference, setExternalReference] = useState(null);
@@ -34,8 +38,16 @@ function Detalhes() {
   const valorPagamento = 0.25;
   const referenceFromURL = searchParams.get("ref");
 
-  // Carregar dados do location ou da API (apenas uma vez)
   useEffect(() => {
+    const getStoredData = () => {
+      const storedDados = sessionStorage.getItem('dadosFormulario');
+      const storedCalorias = sessionStorage.getItem('calorias');
+      if (storedDados && storedCalorias) {
+        setDadosFormulario(JSON.parse(storedDados));
+        setCalorias(storedCalorias);
+      }
+    };
+
     if (location.state?.dadosFormulario && location.state?.calorias) {
       setDadosFormulario(location.state.dadosFormulario);
       setCalorias(location.state.calorias);
@@ -51,30 +63,29 @@ function Detalhes() {
             peso: data.peso,
             altura: data.altura,
             sexo: data.sexo,
-            atividade: Object.keys(niveisAtividade).find(key => niveisAtividade[key] === data.atividade),
-            objetivo: Object.keys(objetivosMap).find(key => objetivosMap[key] === data.objetivo),
+            atividade: Object.keys(niveisAtividade).find(k => niveisAtividade[k] === data.atividade),
+            objetivo: Object.keys(objetivosMap).find(k => objetivosMap[k] === data.objetivo)
           });
           setCalorias(data.calorias);
           setExternalReference(referenceFromURL);
           setIsPaid(true);
         })
-        .catch(err => {
-          console.error("Erro ao buscar dados:", err);
-        });
+        .catch(err => console.error("Erro ao buscar dados:", err));
     } else {
-      const storedDadosFormulario = sessionStorage.getItem('dadosFormulario');
-      const storedCalorias = sessionStorage.getItem('calorias');
-      if (storedDadosFormulario && storedCalorias) {
-        setDadosFormulario(JSON.parse(storedDadosFormulario));
-        setCalorias(storedCalorias);
-      }
+      getStoredData();
     }
   }, [location.state, referenceFromURL]);
 
-  const handleEmailChange = (e) => setEmail(e.target.value);
-
   const handleSendEmail = async () => {
-    if (loading || !dadosFormulario) return;
+    setFeedbackMsg('');
+    setEmailError('');
+
+    if (!isEmailValid(email)) {
+      setEmailError('Por favor, insira um e-mail válido.');
+      return;
+    }
+
+    if (!dadosFormulario) return;
     setLoading(true);
 
     const endpoint = isPaid
@@ -101,63 +112,40 @@ function Detalhes() {
       });
 
       const result = await response.json();
+
       if (!response.ok) throw new Error(result.message || 'Erro ao enviar');
 
-      alert(result.message || 'PDF enviado com sucesso!');
-      setShowModal(false);
+      setFeedbackMsg(result.message || 'PDF enviado com sucesso!');
       setEmail('');
+      setShowModal(false);
     } catch (error) {
       console.error('Erro:', error);
-      alert('Erro ao enviar o e-mail. Tente novamente.');
+      setFeedbackMsg('Erro ao enviar o e-mail. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePagamento = () => {
-    setShowPagamento(true);
+  const abrirResumo = () => {
+    setIsPaid(false);
+    setShowModal(true);
   };
 
-  const onPagamentoConfirmado = (externalRef) => {
-    setExternalReference(externalRef);
+  const handlePagamento = () => setShowPagamento(true);
+
+  const onPagamentoConfirmado = (ref) => {
+    setExternalReference(ref);
     setIsPaid(true);
     setShowPagamento(false);
     setShowModal(true);
   };
 
-  // const verificarStatusPagamento = async () => {
-  //   if (!externalReference) {
-  //     alert("Pagamento não iniciado ou referência ausente.");
-  //     return;
-  //   }
-
-  //   try {
-  //     setCheckingStatus(true);
-  //     const resposta = await fetch(`${process.env.REACT_APP_API_HOST}/pagamento/status/${externalReference}`);
-  //     const data = await resposta.json();
-
-  //     if (data.status === "approved") {
-  //       setIsPaid(true);
-  //       setShowModal(true);
-  //     } else {
-  //       alert("Pagamento ainda não confirmado. Tente novamente mais tarde.");
-  //     }
-  //   } catch (erro) {
-  //     console.error("Erro ao verificar status:", erro);
-  //     alert("Erro ao verificar o status do pagamento.");
-  //   } finally {
-  //     setCheckingStatus(false);
-  //   }
-  // };
-
-  if (!calorias || !dadosFormulario) {
-    return <p>Erro: Nenhum dado recebido.</p>;
-  }
+  if (!calorias || !dadosFormulario) return <p>Erro: Nenhum dado recebido.</p>;
 
   return (
     <Container className="d-flex justify-content-center align-items-center">
       <Card className="meucard">
-        <h2 align='center'>Diagnóstico Calórico 🏋️</h2>
+        <h2 align="center">Diagnóstico Calórico 🏋️</h2>
         <p><strong>Nome:</strong> {dadosFormulario.nome}</p>
         <p><strong>Idade:</strong> {dadosFormulario.idade} anos</p>
         <p><strong>Peso:</strong> {dadosFormulario.peso} kg</p>
@@ -168,14 +156,13 @@ function Detalhes() {
         <h3>Calorias Necessárias: {calorias}</h3>
 
         <div className="d-flex flex-column align-items-center mt-3">
-          <Button className='meubutton' onClick={() => { setIsPaid(false); setShowModal(true); }} variant="secondary">
+          <Button className='meubutton' onClick={abrirResumo} variant="secondary">
             Resumo Nutricional 🥗
           </Button>
 
           <Button className='meubutton' onClick={handlePagamento} variant="secondary">
             Adquirir Relatório Completo 🔥
           </Button>
-
         </div>
 
         <Button className='meubutton mt-3' onClick={() => navigate('/')} variant="primary">
@@ -183,25 +170,39 @@ function Detalhes() {
         </Button>
       </Card>
 
-      {/* Modal de envio de email */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      {/* Modal: Enviar PDF por e-mail */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Enviar Resumo Nutricional</Modal.Title>
+          <Modal.Title>Enviar {isPaid ? 'Relatório Completo' : 'Resumo Nutricional'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Form.Group controlId="email">
               <Form.Label>Digite seu e-mail</Form.Label>
-              <Form.Control type="email" value={email} onChange={handleEmailChange} required />
+              <Form.Control
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                isInvalid={!!emailError}
+              />
+              <Form.Control.Feedback type="invalid">
+                {emailError}
+              </Form.Control.Feedback>
             </Form.Group>
-            <Button className="mt-3" variant="success" onClick={handleSendEmail} disabled={loading}>
+            <Button
+              className="mt-3"
+              variant="success"
+              onClick={handleSendEmail}
+              disabled={loading}
+            >
               {loading ? <Spinner size="sm" animation="border" /> : "Enviar"}
             </Button>
+            {feedbackMsg && <Alert className="mt-3" variant="info">{feedbackMsg}</Alert>}
           </Form>
         </Modal.Body>
       </Modal>
 
-      {/* Modal de pagamento */}
+      {/* Modal: Pagamento */}
       <Modal show={showPagamento} onHide={() => setShowPagamento(false)} size="lg" centered>
         <Modal.Header closeButton>
           <Modal.Title>Relatório Nutricional Completo</Modal.Title>
