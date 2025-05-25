@@ -33,6 +33,8 @@ function Detalhes() {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showPagamento, setShowPagamento] = useState(false);
+  const [showConfirmEmailModal, setShowConfirmEmailModal] = useState(false);
+  const [emailToConfirm, setEmailToConfirm] = useState('');
   const [externalReference, setExternalReference] = useState(null);
 
   const valorPagamento = 0.25;
@@ -76,7 +78,8 @@ function Detalhes() {
     }
   }, [location.state, referenceFromURL]);
 
-  const handleSendEmail = async () => {
+  // Novo: Validação do e-mail + abrir modal de confirmação
+  const handleValidateEmailAndConfirm = () => {
     setFeedbackMsg('');
     setEmailError('');
 
@@ -85,8 +88,23 @@ function Detalhes() {
       return;
     }
 
-    if (!dadosFormulario) return;
+    // Abrir modal de confirmação para e-mail pago apenas
+    if (isPaid) {
+      setEmailToConfirm(email);
+      setShowConfirmEmailModal(true);
+    } else {
+      // Envio direto para PDF gratuito
+      handleSendEmail(email);
+    }
+  };
+
+  // Envia o e-mail (chamado após confirmação do e-mail)
+  const handleSendEmail = async (emailParam) => {
     setLoading(true);
+    setFeedbackMsg('');
+    setEmailError('');
+
+    if (!dadosFormulario) return;
 
     const endpoint = isPaid
       ? `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`
@@ -98,7 +116,7 @@ function Detalhes() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          email,
+          email: emailParam,
           nome: dadosFormulario.nome,
           calorias,
           idade: dadosFormulario.idade,
@@ -118,6 +136,7 @@ function Detalhes() {
       setFeedbackMsg(result.message || 'PDF enviado com sucesso!');
       setEmail('');
       setShowModal(false);
+      setShowConfirmEmailModal(false);
     } catch (error) {
       console.error('Erro:', error);
       setFeedbackMsg('Erro ao enviar o e-mail. Tente novamente.');
@@ -184,6 +203,7 @@ function Detalhes() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 isInvalid={!!emailError}
+                disabled={loading}
               />
               <Form.Control.Feedback type="invalid">
                 {emailError}
@@ -192,7 +212,7 @@ function Detalhes() {
             <Button
               className="mt-3"
               variant="success"
-              onClick={handleSendEmail}
+              onClick={handleValidateEmailAndConfirm}
               disabled={loading}
             >
               {loading ? <Spinner size="sm" animation="border" /> : "Enviar"}
@@ -200,6 +220,29 @@ function Detalhes() {
             {feedbackMsg && <Alert className="mt-3" variant="info">{feedbackMsg}</Alert>}
           </Form>
         </Modal.Body>
+      </Modal>
+
+      {/* Modal: Confirmação do e-mail para PDF pago */}
+      <Modal show={showConfirmEmailModal} onHide={() => setShowConfirmEmailModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirme seu e-mail</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Por favor, confirme que seu e-mail está correto para enviar o relatório:</p>
+          <p><strong>{emailToConfirm}</strong></p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowConfirmEmailModal(false)} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => handleSendEmail(emailToConfirm)}
+            disabled={loading}
+          >
+            {loading ? <Spinner size="sm" animation="border" /> : "Confirmar e Enviar"}
+          </Button>
+        </Modal.Footer>
       </Modal>
 
       {/* Modal: Pagamento */}
