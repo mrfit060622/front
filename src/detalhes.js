@@ -38,7 +38,7 @@ function Detalhes() {
   const [emailToConfirm, setEmailToConfirm] = useState('');
   const [externalReference, setExternalReference] = useState(null);
 
-  const valorPagamento = 19.90; // corrigido para R$19,90
+  const valorPagamento = 1; // preço atualizado para o relatório completo
   const descricaoPagamento = "Relatório Nutricional Completo com análise detalhada de macronutrientes, sugestões personalizadas e plano alimentar.";  
   const produtoNome = "Relatório Nutricional Completo";
 
@@ -141,19 +141,12 @@ function Detalhes() {
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.message || 'Erro ao enviar');
-
-      // Mensagem de sucesso exibida no modal
+       
       setFeedbackMsg(result.message || 'PDF enviado com sucesso!');
       setFeedbackType('success');
       setEmail('');
+      setShowModal(false);
       setShowConfirmEmailModal(false);
-
-      // Fecha modal após 3 segundos para o usuário ver a mensagem
-      setTimeout(() => {
-        setShowModal(false);
-        setFeedbackMsg('');
-        setFeedbackType('');
-      }, 3000);
     } catch (error) {
       console.error('Erro:', error);
       setFeedbackMsg('Erro ao enviar o e-mail. Tente novamente.');
@@ -189,8 +182,8 @@ function Detalhes() {
 
   return (
     <Container className="d-flex justify-content-center align-items-center">
-      <Card className="meucard p-4" style={{ maxWidth: '450px', width: '100%' }}>
-        <h2 className="text-center mb-4">Diagnóstico Calórico 🏋️</h2>
+      <Card className="meucard">
+        <h2 align="center">Diagnóstico Calórico 🏋️</h2>
         <p><strong>Nome:</strong> {dadosFormulario.nome}</p>
         <p><strong>Idade:</strong> {dadosFormulario.idade} anos</p>
         <p><strong>Peso:</strong> {dadosFormulario.peso} kg</p>
@@ -198,19 +191,19 @@ function Detalhes() {
         <p><strong>Sexo:</strong> {dadosFormulario.sexo === 'm' ? 'Masculino' : 'Feminino'}</p>
         <p><strong>Atividade Física:</strong> {niveisAtividade[dadosFormulario.atividade]}</p>
         <p><strong>Objetivo:</strong> {objetivosMap[dadosFormulario.objetivo]}</p>
-        <h3 className="mt-3">Calorias Necessárias: {calorias}</h3>
+        <h3>Calorias Necessárias: {calorias}</h3>
 
-        <div className="d-flex flex-column align-items-center mt-4 gap-2">
-          <Button className='meubutton w-100' onClick={abrirResumo} variant="secondary">
+        <div className="d-flex flex-column align-items-center mt-3">
+          <Button className='meubutton' onClick={abrirResumo} variant="secondary">
             Resumo Nutricional 🥗
           </Button>
 
-          <Button className='meubutton w-100' onClick={handlePagamento} variant="secondary">
+          <Button className='meubutton' onClick={handlePagamento} variant="secondary">
             Adquirir Relatório Completo 🔥
           </Button>
         </div>
 
-        <Button className='meubutton mt-4 w-100' onClick={() => navigate('/')} variant="primary">
+        <Button className='meubutton mt-3' onClick={() => navigate('/')} variant="primary">
           Voltar
         </Button>
       </Card>
@@ -218,65 +211,86 @@ function Detalhes() {
       {/* Modal: Enviar PDF por e-mail */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Enviar PDF do {isPaid ? 'Relatório Completo' : 'Resumo Nutricional'}</Modal.Title>
+          <Modal.Title>Enviar {isPaid ? 'Relatório Completo' : 'Resumo Nutricional'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {feedbackMsg && (
-            <Alert variant={feedbackType} onClose={() => setFeedbackMsg('')} dismissible>
-              {feedbackMsg}
-            </Alert>
-          )}
+          <Form>
+            <Form.Group controlId="email">
+              <Form.Label>Digite seu e-mail para receber o PDF:</Form.Label>
+              <Form.Control
+                type="email"
+                placeholder="exemplo@dominio.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                isInvalid={!!emailError}
+              />
+              <Form.Control.Feedback type="invalid">{emailError}</Form.Control.Feedback>
+            </Form.Group>
 
-          <Form.Group className="mb-3" controlId="email">
-            <Form.Label>Digite seu e-mail para receber o PDF:</Form.Label>
-            <Form.Control
-              type="email"
-              placeholder="exemplo@dominio.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              isInvalid={!!emailError}
-              disabled={loading}
-            />
-            <Form.Control.Feedback type="invalid">{emailError}</Form.Control.Feedback>
-          </Form.Group>
+            {isPaid && (
+              <>
+                <hr />
+                <p><strong>Produto:</strong> {produtoNome}</p>
+                <p><strong>Descrição:</strong> {descricaoPagamento}</p>
+                <p><strong>Valor:</strong> R$ {valorPagamento.toFixed(2)}</p>
+              </>
+            )}
+
+            {feedbackMsg && (
+              <Alert variant={feedbackType} className="mt-3">
+                {feedbackMsg}
+              </Alert>
+            )}
+          </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)} disabled={loading}>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleValidateEmailAndConfirm} disabled={loading}>
+          <Button variant="primary" disabled={loading} onClick={handleValidateEmailAndConfirm}>
             {loading ? <Spinner animation="border" size="sm" /> : 'Enviar PDF'}
           </Button>
         </Modal.Footer>
       </Modal>
 
-      {/* Modal: Pagamento */}
-      <CheckoutBricks
-        show={showPagamento}
-        valor={valorPagamento}
-        descricao={descricaoPagamento}
-        nomeProduto={produtoNome}
-        onClose={() => setShowPagamento(false)}
-        onPagamentoConfirmado={onPagamentoConfirmado}
-      />
-
-      {/* Modal: Confirmar e-mail antes do envio para usuário pago */}
+      {/* Modal: Confirmação de E-mail para PDF Pago */}
       <Modal show={showConfirmEmailModal} onHide={() => setShowConfirmEmailModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Confirmar Envio</Modal.Title>
+          <Modal.Title>Confirmação</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Você deseja enviar o relatório completo para o e-mail:</p>
-          <p><strong>{emailToConfirm}</strong>?</p>
+          <p>Confirma que deseja receber o relatório no e-mail <strong>{emailToConfirm}</strong>?</p>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowConfirmEmailModal(false)}>
-            Cancelar
-          </Button>
-          <Button variant="primary" onClick={() => handleSendEmail(emailToConfirm)} disabled={loading}>
-            {loading ? <Spinner animation="border" size="sm" /> : 'Confirmar e Enviar'}
+          <Button variant="secondary" onClick={() => setShowConfirmEmailModal(false)}>Cancelar</Button>
+          <Button
+            variant="primary"
+            onClick={() => handleSendEmail(emailToConfirm)}
+            disabled={loading}
+          >
+            {loading ? <Spinner animation="border" size="sm" /> : 'Confirmar'}
           </Button>
         </Modal.Footer>
+      </Modal>
+
+      {/* Modal: Pagamento */}
+      <Modal show={showPagamento} onHide={() => setShowPagamento(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Pagamento do Relatório Completo</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p><strong>Produto:</strong> {produtoNome}</p>
+          <p><strong>Descrição:</strong> {descricaoPagamento}</p>
+          <p><strong>Valor:</strong> R$ {valorPagamento.toFixed(2)}</p>
+
+          {/* Passa a descrição, valor, e callback para CheckoutBricks */}
+          <CheckoutBricks
+            valor={valorPagamento}
+            descricao={descricaoPagamento}
+            produto={produtoNome}
+            onPagamentoConfirmado={onPagamentoConfirmado}
+          />
+        </Modal.Body>
       </Modal>
     </Container>
   );
