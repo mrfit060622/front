@@ -142,11 +142,17 @@ function Detalhes() {
 
       if (!response.ok) throw new Error(result.message || 'Erro ao enviar');
        
-      setFeedbackMsg(result.message || 'PDF enviado com sucesso!');
-      setFeedbackType('success');
-      setEmail('');
-      setShowModal(false);
-      setShowConfirmEmailModal(false);
+    setFeedbackMsg(result.message || 'PDF enviado com sucesso!');
+    setFeedbackType('success');
+    setEmail('');
+
+// Fechar o modal após um tempo para dar tempo de ver o alerta
+    setTimeout(() => {
+    setShowModal(false);
+    setShowConfirmEmailModal(false);
+    setFeedbackMsg('');
+    setFeedbackType('');
+    }, 3000); // 3 segundos
     } catch (error) {
       console.error('Erro:', error);
       setFeedbackMsg('Erro ao enviar o e-mail. Tente novamente.');
