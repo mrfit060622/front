@@ -233,6 +233,8 @@ function Detalhes() {
               <Form.Control.Feedback type="invalid">{emailError}</Form.Control.Feedback>
             </Form.Group>
 
+            {isPaid}
+
             {feedbackMsg && (
               <Alert variant={feedbackType} className="mt-3">
                 {feedbackMsg}
