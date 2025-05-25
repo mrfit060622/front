@@ -38,7 +38,7 @@ function Detalhes() {
   const [emailToConfirm, setEmailToConfirm] = useState('');
   const [externalReference, setExternalReference] = useState(null);
 
-  const valorPagamento = 1; // preço atualizado para o relatório completo
+  const valorPagamento = 19.90; // preço atualizado para o relatório completo
   const descricaoPagamento = "Relatório Nutricional Completo com análise detalhada de macronutrientes, sugestões personalizadas e plano alimentar.";  
   const produtoNome = "Relatório Nutricional Completo";
 
@@ -141,18 +141,12 @@ function Detalhes() {
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.message || 'Erro ao enviar');
-       
-    setFeedbackMsg(result.message || 'PDF enviado com sucesso!');
-    setFeedbackType('success');
-    setEmail('');
 
-// Fechar o modal após um tempo para dar tempo de ver o alerta
-    setTimeout(() => {
-    setShowModal(false);
-    setShowConfirmEmailModal(false);
-    setFeedbackMsg('');
-    setFeedbackType('');
-    }, 3000); // 3 segundos
+      setFeedbackMsg(result.message || 'PDF enviado com sucesso!');
+      setFeedbackType('success');
+      setEmail('');
+      setShowModal(false);
+      setShowConfirmEmailModal(false);
     } catch (error) {
       console.error('Erro:', error);
       setFeedbackMsg('Erro ao enviar o e-mail. Tente novamente.');
@@ -232,16 +226,6 @@ function Detalhes() {
               />
               <Form.Control.Feedback type="invalid">{emailError}</Form.Control.Feedback>
             </Form.Group>
-
-            {isPaid && (
-              <>
-                <hr />
-                <p><strong>Produto:</strong> {produtoNome}</p>
-                <p><strong>Descrição:</strong> {descricaoPagamento}</p>
-                <p><strong>Valor:</strong> R$ {valorPagamento.toFixed(2)}</p>
-              </>
-            )}
-
             {feedbackMsg && (
               <Alert variant={feedbackType} className="mt-3">
                 {feedbackMsg}
