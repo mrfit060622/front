@@ -190,7 +190,7 @@ function Detalhes() {
 
         <div className="d-flex flex-column align-items-center mt-3">
           <Button className='meubutton' onClick={abrirResumo} variant="secondary">
-            Resumo Nutricional 🥗
+            Resumo Nutricional - Grátis 🥗
           </Button>
 
           <Button className='meubutton' onClick={handlePagamento} variant="secondary">
