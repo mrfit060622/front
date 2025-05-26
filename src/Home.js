@@ -1,16 +1,17 @@
 import React, { useState, useRef } from 'react';
-import { Form, Button, Container, Row, Col, Card,modal } from 'react-bootstrap';
+import { Form, Button, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './styles/cadastro.css';
 
 function Home() {
   const [calorias, setCalorias] = useState(null);
-  const caloriasRef = useRef(null); // Referência ao campo de calorias
+  const [carregando, setCarregando] = useState(false); // ⬅️ Estado para controlar carregamento
+  const caloriasRef = useRef(null);
   const navigate = useNavigate();
 
   const [dadosFormulario, setDadosFormulario] = useState({
-    nome: '', // Adicionando o campo nome
+    nome: '',
     idade: '',
     peso: '',
     altura: '',
@@ -50,11 +51,11 @@ function Home() {
 
   const calcularCalorias = async (e) => {
     e.preventDefault();
-  
+
     if (!validarEntradas()) return;
-  
-    console.log("Enviando para API:", dadosFormulario);
-  
+
+    setCarregando(true); // ⬅️ Inicia o carregamento
+
     try {
       const resposta = await axios.post(
         `${process.env.REACT_APP_API_HOST}/calculo/`,
@@ -63,12 +64,12 @@ function Home() {
           headers: {
             "Content-Type": "application/json",
           },
-          withCredentials: true, // Permitir envio de cookies/sessão
+          withCredentials: true,
         }
       );
-  
+
       const caloriasCalculadas = resposta.data.tmb;
-  
+
       navigate("/detalhes", {
         state: {
           calorias: caloriasCalculadas,
@@ -78,9 +79,10 @@ function Home() {
     } catch (erro) {
       console.error("Erro ao calcular calorias:", erro);
       alert("Ocorreu um erro ao calcular calorias. Tente novamente mais tarde.");
+    } finally {
+      setCarregando(false); // ⬅️ Finaliza o carregamento mesmo se falhar
     }
   };
-  
 
   return (
     <div>
@@ -90,89 +92,97 @@ function Home() {
             <Card>
               <Card.Body className='meucard'>
                 <h2 className="meutitle">Calculadora de Calorias</h2>
-                <Form onSubmit={calcularCalorias}>
-                  <Form.Group controlId="formNome" className="mb-3">
-                    <Form.Label>Nome</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="nome"
-                      placeholder="Digite seu nome"
-                      value={dadosFormulario.nome}
-                      onChange={lidarComMudanca}
-                      required
-                    />
-                  </Form.Group>
 
-                  <Form.Group controlId="formIdade" className="mb-3">
-                    <Form.Label>Idade</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="idade"
-                      placeholder="Digite sua idade"
-                      value={dadosFormulario.idade}
-                      onChange={lidarComMudanca}
-                      required
-                    />
-                  </Form.Group>
+                {carregando ? (
+                  <div className="text-center my-4">
+                    <Spinner animation="border" role="status" className="me-2" />
+                    <span>Estamos processando seus dados, isso pode levar alguns segundos...</span>
+                  </div>
+                ) : (
+                  <Form onSubmit={calcularCalorias}>
+                    <Form.Group controlId="formNome" className="mb-3">
+                      <Form.Label>Nome</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="nome"
+                        placeholder="Digite seu nome"
+                        value={dadosFormulario.nome}
+                        onChange={lidarComMudanca}
+                        required
+                      />
+                    </Form.Group>
 
-                  <Form.Group controlId="formPeso" className="mb-3">
-                    <Form.Label>Peso (kg)</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="peso"
-                      placeholder="Digite seu peso"
-                      value={dadosFormulario.peso}
-                      onChange={lidarComMudanca}
-                      required
-                    />
-                  </Form.Group>
+                    <Form.Group controlId="formIdade" className="mb-3">
+                      <Form.Label>Idade</Form.Label>
+                      <Form.Control
+                        type="number"
+                        name="idade"
+                        placeholder="Digite sua idade"
+                        value={dadosFormulario.idade}
+                        onChange={lidarComMudanca}
+                        required
+                      />
+                    </Form.Group>
 
-                  <Form.Group controlId="formAltura" className="mb-3">
-                    <Form.Label>Altura (cm)</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="altura"
-                      placeholder="Digite sua altura"
-                      value={dadosFormulario.altura}
-                      onChange={lidarComMudanca}
-                      required
-                    />
-                  </Form.Group>
+                    <Form.Group controlId="formPeso" className="mb-3">
+                      <Form.Label>Peso (kg)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        name="peso"
+                        placeholder="Digite seu peso"
+                        value={dadosFormulario.peso}
+                        onChange={lidarComMudanca}
+                        required
+                      />
+                    </Form.Group>
 
-                  <Form.Group controlId="formSexo" className="mb-3">
-                    <Form.Label>Sexo</Form.Label>
-                    <Form.Select name="sexo" value={dadosFormulario.sexo} onChange={lidarComMudanca}>
-                      <option value="m">Masculino</option>
-                      <option value="f">Feminino</option>
-                    </Form.Select>
-                  </Form.Group>
+                    <Form.Group controlId="formAltura" className="mb-3">
+                      <Form.Label>Altura (cm)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        name="altura"
+                        placeholder="Digite sua altura"
+                        value={dadosFormulario.altura}
+                        onChange={lidarComMudanca}
+                        required
+                      />
+                    </Form.Group>
 
-                  <Form.Group controlId="formAtividade" className="mb-3">
-                    <Form.Label>Nível de Atividade</Form.Label>
-                    <Form.Select name="atividade" value={dadosFormulario.atividade} onChange={lidarComMudanca}>
-                      <option value="1">Sedentário</option>
-                      <option value="2">Levemente Ativo</option>
-                      <option value="3">Moderadamente Ativo</option>
-                      <option value="4">Muito Ativo</option>
-                      <option value="5">Extremamente Ativo</option>
-                    </Form.Select>
-                  </Form.Group>
+                    <Form.Group controlId="formSexo" className="mb-3">
+                      <Form.Label>Sexo</Form.Label>
+                      <Form.Select name="sexo" value={dadosFormulario.sexo} onChange={lidarComMudanca}>
+                        <option value="m">Masculino</option>
+                        <option value="f">Feminino</option>
+                      </Form.Select>
+                    </Form.Group>
 
-                  <Form.Group controlId="formObjetivo" className="mb-3">
-                    <Form.Label>Objetivo</Form.Label>
-                    <Form.Select name="objetivo" value={dadosFormulario.objetivo} onChange={lidarComMudanca}>
-                      <option value="1">Manter Peso</option>
-                      <option value="2">Ganhar Massa Muscular</option>
-                      <option value="3">Emagrecer</option>
-                    </Form.Select>
-                  </Form.Group>
+                    <Form.Group controlId="formAtividade" className="mb-3">
+                      <Form.Label>Nível de Atividade</Form.Label>
+                      <Form.Select name="atividade" value={dadosFormulario.atividade} onChange={lidarComMudanca}>
+                        <option value="1">Sedentário</option>
+                        <option value="2">Levemente Ativo</option>
+                        <option value="3">Moderadamente Ativo</option>
+                        <option value="4">Muito Ativo</option>
+                        <option value="5">Extremamente Ativo</option>
+                      </Form.Select>
+                    </Form.Group>
 
-                  <Button variant="primary" type="submit" className="meubutton">
-                    Calcular
-                  </Button>
-                </Form>
+                    <Form.Group controlId="formObjetivo" className="mb-3">
+                      <Form.Label>Objetivo</Form.Label>
+                      <Form.Select name="objetivo" value={dadosFormulario.objetivo} onChange={lidarComMudanca}>
+                        <option value="1">Manter Peso</option>
+                        <option value="2">Ganhar Massa Muscular</option>
+                        <option value="3">Emagrecer</option>
+                      </Form.Select>
+                    </Form.Group>
 
-                {calorias && (
+                    <Button variant="primary" type="submit" className="meubutton">
+                      Calcular
+                    </Button>
+                  </Form>
+                )}
+
+                {calorias && !carregando && (
                   <div className="text-center mt-4" ref={caloriasRef}>
                     <h4>Você precisa de:</h4>
                     <p>
