@@ -38,7 +38,7 @@ function Detalhes() {
   const [emailToConfirm, setEmailToConfirm] = useState('');
   const [externalReference, setExternalReference] = useState(null);
 
-  const valorPagamento = 0.25;
+  const valorPagamento = 19.90;
   const referenceFromURL = searchParams.get("ref");
 
   useEffect(() => {
