@@ -194,7 +194,7 @@ function Detalhes() {
           </Button>
 
           <Button className='meubutton' onClick={handlePagamento} variant="secondary">
-            Adquirir Relatório Completo 🔥
+            Adquirir Relatório Completo por apenas R$ 19,90 🔥
           </Button>
         </div>
 
