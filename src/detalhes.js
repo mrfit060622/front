@@ -112,7 +112,7 @@ function Detalhes() {
 
     const endpoint = isPaid
       ? `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`
-      : `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf`;
+      : `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`;
 
     try {
       const response = await fetch(endpoint, {
