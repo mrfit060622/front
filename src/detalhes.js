@@ -17,7 +17,40 @@ const objetivosMap = {
   "3": "Emagrecer - Déficit calórico para perda de gordura"
 };
 
+const refeicoes = {
+  "Café da Manhã": {
+    limite: 3,
+    alimentos: [
+      "Ovo cozido", "Omelete simples", "Pão francês", "Pão integral", "Tapioca", "Banana",
+      "Aveia", "Iogurte natural", "Mamão", "Queijo branco", "Café com leite", "Vitamina de banana"
+    ]
+  },
+  "Almoço/Jantar": {
+    limite: 5,
+    alimentos: [
+      "Arroz branco", "Arroz integral", "Feijão carioca", "Feijão preto", "Grão-de-bico",
+      "Frango grelhado", "Peixe assado", "Carne moída", "Batata doce cozida",
+      "Batata inglesa cozida", "Salada de alface e tomate", "Brócolis cozido", "Couve refogada",
+      "Abobrinha refogada", "Ovo cozido", "Omelete", "Macarrão integral"
+    ]
+  },
+  "Lanche": {
+    limite: 3,
+    alimentos: [
+      "Abacate", "Amendoim torrado", "Castanha de caju", "Nozes", "Maçã", "Pão integral",
+      "Pão francês", "Queijo branco", "Uvas", "Iogurte natural", "Pera", "Torrada integral",
+      "Biscoito de polvilho"
+    ]
+  }
+};
+
 const isEmailValid = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+const formatarTempo = (segundos) => {
+  const minutos = Math.floor(segundos / 60);
+  const segundosRestantes = segundos % 60;
+  return `${minutos.toString().padStart(2, "0")}:${segundosRestantes.toString().padStart(2, "0")}`;
+};
 
 function Detalhes() {
   const location = useLocation();
@@ -37,10 +70,29 @@ function Detalhes() {
   const [showConfirmEmailModal, setShowConfirmEmailModal] = useState(false);
   const [emailToConfirm, setEmailToConfirm] = useState('');
   const [externalReference, setExternalReference] = useState(null);
+  const [showSelecaoAlimentos, setShowSelecaoAlimentos] = useState(false);
+  const [contador, setContador] = useState(600); // 600 segundos = 10 minutos
+  const [preferencias, setPreferencias] = useState({
+    "Café da Manhã": [],
+    "Almoço/Jantar": [],
+    "Lanche": []
+  });
 
   const valorPagamento = 19.90;
   const referenceFromURL = searchParams.get("ref");
 
+  // Contador regressivo
+  useEffect(() => {
+    if (contador <= 0) return;
+
+    const timerId = setInterval(() => {
+      setContador(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [contador]);
+
+  // Carregar dados do formulário
   useEffect(() => {
     const getStoredData = () => {
       const storedDados = sessionStorage.getItem('dadosFormulario');
@@ -79,6 +131,7 @@ function Detalhes() {
     }
   }, [location.state, referenceFromURL]);
 
+  // Validação e confirmação de email
   const handleValidateEmailAndConfirm = () => {
     setFeedbackMsg('');
     setFeedbackType('');
@@ -97,6 +150,7 @@ function Detalhes() {
     }
   };
 
+  // Enviar email
   const handleSendEmail = async (emailParam) => {
     setLoading(true);
     setFeedbackMsg('');
@@ -110,9 +164,7 @@ function Detalhes() {
       return;
     }
 
-    const endpoint = isPaid
-      ? `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`
-      : `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`;
+    const endpoint = `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`;
 
     try {
       const response = await fetch(endpoint, {
@@ -129,6 +181,7 @@ function Detalhes() {
           sexo: dadosFormulario.sexo === 'm' ? 'Masculino' : 'Feminino',
           atividade: niveisAtividade[dadosFormulario.atividade],
           objetivo: objetivosMap[dadosFormulario.objetivo],
+          preferencias,
           data: new Date().toLocaleDateString(),
         })
       });
@@ -151,6 +204,7 @@ function Detalhes() {
     }
   };
 
+  // Abrir modal do resumo (gratuito)
   const abrirResumo = () => {
     setIsPaid(false);
     setShowModal(true);
@@ -160,8 +214,12 @@ function Detalhes() {
     setEmailError('');
   };
 
-  const handlePagamento = () => setShowPagamento(true);
+  // Abrir modal de seleção de alimentos antes do pagamento
+  const abrirSelecaoAlimentos = () => {
+    setShowSelecaoAlimentos(true);
+  };
 
+  // Confirmar pagamento
   const onPagamentoConfirmado = (ref) => {
     setExternalReference(ref);
     setIsPaid(true);
@@ -173,11 +231,34 @@ function Detalhes() {
     setEmailError('');
   };
 
+  // Alternar alimentos selecionados
+  const toggleAlimento = (refeicao, alimento) => {
+    setPreferencias(prev => {
+      const selecionados = prev[refeicao];
+      if (selecionados.includes(alimento)) {
+        return {
+          ...prev,
+          [refeicao]: selecionados.filter(a => a !== alimento)
+        };
+      } else {
+        if (selecionados.length < refeicoes[refeicao].limite) {
+          return {
+            ...prev,
+            [refeicao]: [...selecionados, alimento]
+          };
+        } else {
+          alert(`Você só pode escolher até ${refeicoes[refeicao].limite} alimentos para ${refeicao}.`);
+          return prev;
+        }
+      }
+    });
+  };
+
   if (!calorias || !dadosFormulario) return <p>Erro: Nenhum dado recebido.</p>;
 
   return (
     <Container className="d-flex justify-content-center align-items-center">
-      <Card className="meucard">
+      <Card className="meucard" style={{ maxWidth: '450px', width: '100%' }}>
         <h2 align="center">Diagnóstico Calórico 🏋️</h2>
         <p><strong>Nome:</strong> {dadosFormulario.nome}</p>
         <p><strong>Idade:</strong> {dadosFormulario.idade} anos</p>
@@ -188,17 +269,17 @@ function Detalhes() {
         <p><strong>Objetivo:</strong> {objetivosMap[dadosFormulario.objetivo]}</p>
         <h3>Calorias Necessárias: {calorias}</h3>
 
-        <div className="d-flex flex-column align-items-center mt-3">
-          <Button className='meubutton' onClick={abrirResumo} variant="secondary">
-            Resumo Nutricional - Grátis 🥗
+        <div className="d-flex flex-column align-items-center mt-3 gap-2">
+          <Button className='meubutton' onClick={abrirResumo} variant="secondary" style={{ width: '100%' }}>
+            Receba seu Resumo Nutricional Grátis 🥗
           </Button>
 
-          <Button className='meubutton' onClick={handlePagamento} variant="secondary">
-            Adquirir Relatório Completo por apenas R$ 19,90 🔥
+          <Button className='meubutton' onClick={abrirSelecaoAlimentos} variant="secondary" style={{ width: '100%' }}>
+            Adquirir Relatório Completo por apenas R$ 19,90🔥
           </Button>
         </div>
 
-        <Button className='meubutton mt-3' onClick={() => navigate('/')} variant="primary">
+        <Button className='meubutton mt-3' onClick={() => navigate('/')} variant="primary" style={{ width: '100%' }}>
           Voltar
         </Button>
       </Card>
@@ -210,6 +291,29 @@ function Detalhes() {
         </Modal.Header>
         <Modal.Body>
           <Form>
+            <Form.Group>
+              <Form.Label><strong>Escolha seus alimentos preferidos por refeição</strong></Form.Label>
+              {Object.entries(refeicoes).map(([refeicao, { limite, alimentos }]) => (
+                <div key={refeicao} className="mb-3">
+                  <strong>{refeicao} (Escolha até {limite} opções)</strong>
+                  <div className="d-flex flex-wrap gap-2 mt-1">
+                    {alimentos.map((alimento, idx) => {
+                      const isSelected = preferencias[refeicao].includes(alimento);
+                      return (
+                        <Button
+                          key={idx}
+                          variant={isSelected ? "success" : "outline-secondary"}
+                          size="sm"
+                          onClick={() => toggleAlimento(refeicao, alimento)}
+                        >
+                          {alimento}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </Form.Group>
             <Form.Group controlId="email">
               <Form.Label>Digite seu e-mail</Form.Label>
               <Form.Control
@@ -219,15 +323,14 @@ function Detalhes() {
                 isInvalid={!!emailError}
                 disabled={loading}
               />
-              <Form.Control.Feedback type="invalid">
-                {emailError}
-              </Form.Control.Feedback>
+              <Form.Control.Feedback type="invalid">{emailError}</Form.Control.Feedback>
             </Form.Group>
             <Button
               className="mt-3"
               variant="success"
               onClick={handleValidateEmailAndConfirm}
               disabled={loading}
+              style={{ width: '100%' }}
             >
               {loading ? <Spinner size="sm" animation="border" /> : "Enviar"}
             </Button>
@@ -264,6 +367,55 @@ function Detalhes() {
         </Modal.Footer>
       </Modal>
 
+      {/* Modal: Seleção de Alimentos antes do pagamento */}
+      <Modal
+        show={showSelecaoAlimentos}
+        onHide={() => setShowSelecaoAlimentos(false)}
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Escolha seus alimentos preferidos</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {Object.entries(refeicoes).map(([refeicao, { limite, alimentos }]) => (
+            <div key={refeicao} className="mb-3">
+              <strong>{refeicao} (máx. {limite})</strong>
+              <div className="d-flex flex-wrap gap-2 mt-1">
+                {alimentos.map((alimento, idx) => {
+                  const isSelected = preferencias[refeicao]?.includes(alimento);
+                  return (
+                    <Button
+                      key={idx}
+                      variant={isSelected ? "success" : "outline-secondary"}
+                      size="sm"
+                      onClick={() => toggleAlimento(refeicao, alimento)}
+                    >
+                      {alimento}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button className='meubutton' variant="secondary" onClick={() => setShowSelecaoAlimentos(false)}>
+            Cancelar
+          </Button>
+          <Button className='meubutton'
+            variant="primary"
+            onClick={() => {
+              setShowSelecaoAlimentos(false);
+              setShowPagamento(true);
+              setContador(600); // Reinicia contador ao abrir pagamento
+            }}
+          >
+            Conclua o pagamento e receba por e-mail seu relatório completo
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* Modal: Pagamento */}
       <Modal show={showPagamento} onHide={() => setShowPagamento(false)} size="lg" centered>
         <Modal.Header closeButton>
@@ -277,6 +429,33 @@ function Detalhes() {
           />
         </Modal.Body>
       </Modal>
+       {/* Contador com estilo profissional */}
+          <div
+            style={{
+              fontWeight: '700',
+              fontSize: '1.4rem',
+              textAlign: 'center',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              backgroundColor: contador <= 60 ? '#ffdddd' : '#e0f7fa',
+              color: contador <= 60 ? '#d32f2f' : '#00796b',
+              boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+              marginBottom: '1.5rem',
+              userSelect: 'none',
+              transition: 'all 0.3s ease',
+              fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+            }}
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            Oferta termina em: {formatarTempo(contador)}
+          </div>
+
+          {contador <= 0 && (
+            <Alert variant="danger" className="mb-3 text-center">
+              Oferta expirada! Por favor, recarregue a página para tentar novamente.
+            </Alert>
+          )}
     </Container>
   );
 }
