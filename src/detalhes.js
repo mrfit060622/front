@@ -257,8 +257,8 @@ function Detalhes() {
   if (!calorias || !dadosFormulario) return <p>Erro: Nenhum dado recebido.</p>;
 
   return (
-    <Container className="d-flex justify-content-center align-items-center">
-      <Card className="meucard" style={{ maxWidth: '450px', width: '100%' }}>
+    <Container className="d-flex flex-column align-items-center" style={{ maxWidth: '480px', marginTop: '1rem' }}>
+        <Card className="meucard" style={{ maxWidth: '450px', width: '100%' }}>
         <h2 align="center">Diagnóstico Calórico 🏋️</h2>
         <p><strong>Nome:</strong> {dadosFormulario.nome}</p>
         <p><strong>Idade:</strong> {dadosFormulario.idade} anos</p>
@@ -283,6 +283,33 @@ function Detalhes() {
           Voltar
         </Button>
       </Card>
+        <div
+    style={{
+      fontWeight: '700',
+      fontSize: '1.4rem',
+      textAlign: 'center',
+      padding: '0.5rem 1rem',
+      borderRadius: '8px',
+      backgroundColor: contador <= 60 ? '#ffdddd' : '#e0f7fa',
+      color: contador <= 60 ? '#d32f2f' : '#00796b',
+      boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+      marginTop: '1.5rem',
+      userSelect: 'none',
+      transition: 'all 0.3s ease',
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      width: '100%',
+    }}
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    Oferta termina em: {formatarTempo(contador)}
+  </div>
+
+  {contador <= 0 && (
+    <Alert variant="danger" className="mt-3 text-center" style={{ width: '100%' }}>
+      Oferta expirada! Por favor, recarregue a página para tentar novamente.
+    </Alert>
+  )}
 
       {/* Modal: Enviar PDF por e-mail */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
@@ -429,33 +456,6 @@ function Detalhes() {
           />
         </Modal.Body>
       </Modal>
-       {/* Contador com estilo profissional */}
-          <div
-            style={{
-              fontWeight: '700',
-              fontSize: '1.4rem',
-              textAlign: 'center',
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              backgroundColor: contador <= 60 ? '#ffdddd' : '#e0f7fa',
-              color: contador <= 60 ? '#d32f2f' : '#00796b',
-              boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-              marginBottom: '1.5rem',
-              userSelect: 'none',
-              transition: 'all 0.3s ease',
-              fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-            }}
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            Oferta termina em: {formatarTempo(contador)}
-          </div>
-
-          {contador <= 0 && (
-            <Alert variant="danger" className="mb-3 text-center">
-              Oferta expirada! Por favor, recarregue a página para tentar novamente.
-            </Alert>
-          )}
     </Container>
   );
 }
