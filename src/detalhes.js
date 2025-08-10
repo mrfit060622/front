@@ -167,6 +167,8 @@ function Detalhes() {
     const endpoint = `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`;
 
     try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 30 segundos timeout
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -183,12 +185,18 @@ function Detalhes() {
           objetivo: objetivosMap[dadosFormulario.objetivo],
           preferencias,
           data: new Date().toLocaleDateString(),
-        })
+        }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
-      const result = await response.json();
+      
 
-      if (!response.ok) throw new Error(result.message || 'Erro ao enviar');
+    if (!response.ok) {
+      const errorResult = await response.json().catch(() => null);
+      throw new Error(errorResult?.message || 'Erro ao enviar');
+    }
+    const result = await response.json();
 
       setFeedbackMsg(result.message || 'PDF enviado com sucesso!');
       setFeedbackType('success');
@@ -196,13 +204,17 @@ function Detalhes() {
       setShowModal(false);
       setShowConfirmEmailModal(false);
     } catch (error) {
-      console.error('Erro:', error);
+    if (error.name === 'AbortError') {
+      setFeedbackMsg('O tempo para enviar o relatório expirou. Tente novamente.');
+    } else {
       setFeedbackMsg('Erro ao enviar o e-mail. Tente novamente.');
-      setFeedbackType('danger');
-    } finally {
-      setLoading(false);
+      console.error('Erro:', error);
     }
-  };
+    setFeedbackType('danger');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Abrir modal do resumo (gratuito)
   const abrirResumo = () => {
