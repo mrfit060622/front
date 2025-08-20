@@ -77,6 +77,8 @@ function Detalhes() {
     "Almoço/Jantar": [],
     "Lanche": []
   });
+  const [quantidadeRefeicoes, setQuantidadeRefeicoes] = useState(3);
+  const [quantidadeRefeicoesError, setQuantidadeRefeicoesError] = useState('');
 
   const valorPagamento = 19.90;
   const referenceFromURL = searchParams.get("ref");
@@ -86,7 +88,13 @@ function Detalhes() {
     if (contador <= 0) return;
 
     const timerId = setInterval(() => {
-      setContador(prev => prev - 1);
+      setContador(prev => {
+        if (prev <= 1) {
+          clearInterval(timerId);
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timerId);
@@ -142,6 +150,11 @@ function Detalhes() {
       return;
     }
 
+    if (quantidadeRefeicoes < 3) {
+      setQuantidadeRefeicoesError('A quantidade mínima de refeições é 3.');
+      return;
+    }
+
     if (isPaid) {
       setEmailToConfirm(email);
       setShowConfirmEmailModal(true);
@@ -167,8 +180,9 @@ function Detalhes() {
     const endpoint = `${process.env.REACT_APP_API_HOST}/pdf/gerar_pdf_pg`;
 
     try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 90000); // 30 segundos timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 segundos timeout
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -184,19 +198,20 @@ function Detalhes() {
           atividade: niveisAtividade[dadosFormulario.atividade],
           objetivo: objetivosMap[dadosFormulario.objetivo],
           preferencias,
+          quantidadeRefeicoes,
           data: new Date().toLocaleDateString(),
+          externalReference
         }),
         signal: controller.signal,
       });
+
       clearTimeout(timeoutId);
 
-      
-
-    if (!response.ok) {
-      const errorResult = await response.json().catch(() => null);
-      throw new Error(errorResult?.message || 'Erro ao enviar');
-    }
-    const result = await response.json();
+      if (!response.ok) {
+        const errorResult = await response.json().catch(() => null);
+        throw new Error(errorResult?.message || 'Erro ao enviar');
+      }
+      const result = await response.json();
 
       setFeedbackMsg(result.message || 'PDF enviado com sucesso!');
       setFeedbackType('success');
@@ -204,17 +219,17 @@ function Detalhes() {
       setShowModal(false);
       setShowConfirmEmailModal(false);
     } catch (error) {
-    if (error.name === 'AbortError') {
-      setFeedbackMsg('O tempo para enviar o relatório expirou. Tente novamente.');
-    } else {
-      setFeedbackMsg('Erro ao enviar o e-mail. Tente novamente.');
-      console.error('Erro:', error);
+      if (error.name === 'AbortError') {
+        setFeedbackMsg('O tempo para enviar o relatório expirou. Tente novamente.');
+      } else {
+        setFeedbackMsg('Erro ao enviar o e-mail. Tente novamente.');
+        console.error('Erro:', error);
+      }
+      setFeedbackType('danger');
+    } finally {
+      setLoading(false);
     }
-    setFeedbackType('danger');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Abrir modal do resumo (gratuito)
   const abrirResumo = () => {
@@ -246,16 +261,18 @@ function Detalhes() {
   // Alternar alimentos selecionados
   const toggleAlimento = (refeicao, alimento) => {
     setPreferencias(prev => {
-      const selecionados = prev[refeicao];
+      const selecionados = prev[refeicao] || [];
       if (selecionados.includes(alimento)) {
+        // Remove alimento selecionado
         return {
           ...prev,
           [refeicao]: selecionados.filter(a => a !== alimento)
         };
       } else {
-        if (selecionados.length < refeicoes[refeicao].limite) {
+        // Adiciona alimento, respeitando limite
+        if (selecionados.length < (refeicoes[refeicao]?.limite || 0)) {
           return {
-            ...prev,
+                       ...prev,
             [refeicao]: [...selecionados, alimento]
           };
         } else {
@@ -270,7 +287,7 @@ function Detalhes() {
 
   return (
     <Container className="d-flex flex-column align-items-center" style={{ maxWidth: '480px', marginTop: '1rem' }}>
-        <Card className="meucard" style={{ maxWidth: '450px', width: '100%' }}>
+      <Card className="meucard" style={{ maxWidth: '450px', width: '100%' }}>
         <h2 align="center">Diagnóstico Calórico 🏋️</h2>
         <p><strong>Nome:</strong> {dadosFormulario.nome}</p>
         <p><strong>Idade:</strong> {dadosFormulario.idade} anos</p>
@@ -295,33 +312,34 @@ function Detalhes() {
           Voltar
         </Button>
       </Card>
-        <div
-    style={{
-      fontWeight: '700',
-      fontSize: '1.4rem',
-      textAlign: 'center',
-      padding: '0.5rem 1rem',
-      borderRadius: '8px',
-      backgroundColor: contador <= 60 ? '#ffdddd' : '#e0f7fa',
-      color: contador <= 60 ? '#d32f2f' : '#00796b',
-      boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-      marginTop: '1.5rem',
-      userSelect: 'none',
-      transition: 'all 0.3s ease',
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-      width: '100%',
-    }}
-    aria-live="polite"
-    aria-atomic="true"
-  >
-    Oferta termina em: {formatarTempo(contador)}
-  </div>
 
-  {contador <= 0 && (
-    <Alert variant="danger" className="mt-3 text-center" style={{ width: '100%' }}>
-      Oferta expirada! Por favor, recarregue a página para tentar novamente.
-    </Alert>
-  )}
+      <div
+        style={{
+          fontWeight: '700',
+          fontSize: '1.4rem',
+          textAlign: 'center',
+          padding: '0.5rem 1rem',
+          borderRadius: '8px',
+          backgroundColor: contador <= 60 ? '#ffdddd' : '#e0f7fa',
+          color: contador <= 60 ? '#d32f2f' : '#00796b',
+          boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+          marginTop: '1.5rem',
+          userSelect: 'none',
+          transition: 'all 0.3s ease',
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          width: '100%',
+        }}
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        Oferta termina em: {formatarTempo(contador)}
+      </div>
+
+      {contador <= 0 && (
+        <Alert variant="danger" className="mt-3 text-center" style={{ width: '100%' }}>
+          Oferta expirada! Por favor, recarregue a página para tentar novamente.
+        </Alert>
+      )}
 
       {/* Modal: Enviar PDF por e-mail */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
@@ -337,7 +355,7 @@ function Detalhes() {
                   <strong>{refeicao} (Escolha até {limite} opções)</strong>
                   <div className="d-flex flex-wrap gap-2 mt-1">
                     {alimentos.map((alimento, idx) => {
-                      const isSelected = preferencias[refeicao].includes(alimento);
+                      const isSelected = preferencias[refeicao]?.includes(alimento);
                       return (
                         <Button
                           key={idx}
@@ -353,6 +371,28 @@ function Detalhes() {
                 </div>
               ))}
             </Form.Group>
+            <Form.Group controlId="quantidadeRefeicoes">
+              <Form.Label>Quantidade de Refeições (mínimo 3)</Form.Label>
+              <Form.Control
+                type="number"
+                min={3}
+                value={quantidadeRefeicoes}
+                onChange={e => {
+                  const val = Number(e.target.value);
+                  setQuantidadeRefeicoes(val);
+                  if (val < 3) {
+                    setQuantidadeRefeicoesError('A quantidade mínima de refeições é 3.');
+                  } else {
+                    setQuantidadeRefeicoesError('');
+                  }
+                }}
+                disabled={loading}
+              />
+              <Form.Control.Feedback type="invalid" style={{ display: quantidadeRefeicoesError ? 'block' : 'none' }}>
+                {quantidadeRefeicoesError}
+              </Form.Control.Feedback>
+            </Form.Group>
+            
             <Form.Group controlId="email">
               <Form.Label>Digite seu e-mail</Form.Label>
               <Form.Control
@@ -473,3 +513,4 @@ function Detalhes() {
 }
 
 export default Detalhes;
+
