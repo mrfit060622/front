@@ -28,7 +28,7 @@ Frontend do projeto **MrFit**, desenvolvido em React, que oferece uma interface 
 O frontend está organizado em camadas para facilitar manutenção e escalabilidade:
 
 - **styles/**: CSS para personalização do estilo das páginas e componentes
-- **SRC/**: Páginas do aplicativo (Home, Serviços, CheckoutBricks, CheckoutTransparente, Detalhes, QuemSomos, TermosDeUso)
+- **SRC/**: Páginas do aplicativo (HOME_OLD, Serviços, CheckoutBricks, CheckoutTransparente, Detalhes, QuemSomos, TermosDeUso)
 
 ---
 

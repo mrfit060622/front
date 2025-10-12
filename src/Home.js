@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './styles/cadastro.css';
 
-function Home() {
+function HOME_OLD() {
   const [calorias, setCalorias] = useState(null);
   const [carregando, setCarregando] = useState(false); // ⬅️ Estado para controlar carregamento
   const caloriasRef = useRef(null);
@@ -202,4 +202,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default HOME_OLD;

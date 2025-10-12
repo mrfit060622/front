@@ -1,15 +1,12 @@
 import React, { useEffect } from 'react';
 import Cadastro from './cadastro';
-import Home from './Home';
 import Detalhes from './detalhes';
 import Servicos from './Servicos';
 import QuemSomos from './QuemSomos';
 import Termos from './TermosDeUso';
 import PlanoMetabolico from './PlanoMetabolico';
 import PerfilCalorico from './PerfilCalorico';
-import EstrategiaAlimentar from './EstrategiaAlimentar';
-import GuiaMetasNutricionais from './GuiaMetasNutricionais';
-import AnalisePersonalizada from './AnalisePersonalizada';
+import Home from './cta';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { Navbar, Nav } from 'react-bootstrap';
 import { trackPageView } from "./analytics";
@@ -38,7 +35,7 @@ function App() {
 
       {/* Rotas */}
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* <Route path="/" element={<HOME_OLD />} /> */}
         {/* Cadastro em desenvolvimento */}
         {/*<Route path="/Cadastro" element={<Cadastro />} />*/}
         <Route path="/Servicos" element={<Servicos/>} />
@@ -47,6 +44,7 @@ function App() {
         <Route path="/TermosDeUso" element={<Termos />} />
         <Route path="/plano-metabolico" element={<PlanoMetabolico />} />
         <Route path="/perfil-calorico" element={<PerfilCalorico />} />
+        <Route path="/" element={<Home />} />
       </Routes>
     </Router>
   );
