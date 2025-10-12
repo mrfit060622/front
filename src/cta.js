@@ -171,7 +171,7 @@ function buildPayload() {
   if (!result) return null;
   return {
     nome: name,
-    email,
+    email:email,
     idade: result.inputs.age,
     peso: result.inputs.weight,
     altura: result.inputs.height,
