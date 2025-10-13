@@ -28,7 +28,7 @@ export default function Home() {
   const [age, setAge] = useState("");
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
-  const [activity, setActivity] = useState("1.2");
+  const [activity, setActivity] = useState("Sedentario");
   const [goal, setGoal] = useState("manter");
 
   // Resultado calculado (tmb, calorias, meta)
@@ -38,44 +38,44 @@ export default function Home() {
   const calculoRef = useRef(null);
   const resultadoRef = useRef(null);
 
-  // Carrega cálculo salvo do localStorage (se houver)
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("mrfit_calc");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        // popula campos e resultado
-        if (parsed?.inputs) {
-          const i = parsed.inputs;
-          setGender(i.gender || "");
-          setAge(i.age || "");
-          setWeight(i.weight || "");
-          setHeight(i.height || "");
-          setActivity(i.activity || "1.2");
-          setGoal(i.goal || "manter");
-        }
-        if (parsed?.result) {
-          setResult(parsed.result);
-        }
-      }
-    } catch (err) {
-      console.warn("Erro ao carregar mrfit_calc:", err);
-    }
-  }, []);
+  // // Carrega cálculo salvo do localStorage (se houver)
+  // useEffect(() => {
+  //   try {
+  //     const raw = localStorage.getItem("mrfit_calc");
+  //     if (raw) {
+  //       const parsed = JSON.parse(raw);
+  //       // popula campos e resultado
+  //       if (parsed?.inputs) {
+  //         const i = parsed.inputs;
+  //         setGender(i.gender || "");
+  //         setAge(i.age || "");
+  //         setWeight(i.weight || "");
+  //         setHeight(i.height || "");
+  //         setActivity(i.activity || "1.2");
+  //         setGoal(i.goal || "manter");
+  //       }
+  //       if (parsed?.result) {
+  //         setResult(parsed.result);
+  //       }
+  //     }
+  //   } catch (err) {
+  //     console.warn("Erro ao carregar mrfit_calc:", err);
+  //   }
+  // }, []);
 
-  // salva automaticamente no localStorage quando result muda
-  useEffect(() => {
-    const payload = {
-      inputs: { gender, age, weight, height, activity, goal },
-      result: result,
-      timestamp: new Date().toISOString(),
-    };
-    try {
-      localStorage.setItem("mrfit_calc", JSON.stringify(payload));
-    } catch (err) {
-      console.warn("Erro ao salvar mrfit_calc:", err);
-    }
-  }, [gender, age, weight, height, activity, goal, result]);
+  // // salva automaticamente no localStorage quando result muda
+  // useEffect(() => {
+  //   const payload = {
+  //     inputs: { gender, age, weight, height, activity, goal },
+  //     result: result,
+  //     timestamp: new Date().toISOString(),
+  //   };
+  //   try {
+  //     localStorage.setItem("mrfit_calc", JSON.stringify(payload));
+  //   } catch (err) {
+  //     console.warn("Erro ao salvar mrfit_calc:", err);
+  //   }
+  // }, [gender, age, weight, height, activity, goal, result]);
 
   // Valida entradas antes de calcular
   function validarEntradasCalc() {
@@ -102,12 +102,12 @@ export default function Home() {
     // activity e goal já têm defaults.
     return true;
   }
-
+  
   // Harris-Benedict (versão clássica para TMB)
   function handleCalculate(e) {
     e.preventDefault();
     if (!validarEntradasCalc()) return;
-
+    
     const w = parseFloat(weight);
     const h = parseFloat(height);
     const a = parseFloat(age);
@@ -119,10 +119,17 @@ export default function Home() {
       // feminino
       tmb = 447.593 + 9.247 * w + 3.098 * h - 4.330 * a;
     }
-
-    const factor = parseFloat(activity) || 1.2;
+    const atividadeMap = {
+    Sedentario: 1.25,
+    Leve: 1.38,
+    Moderado: 1.55,
+    Intenso: 1.73,
+    Muitointenso: 1.9
+  };
+    const factor = atividadeMap[activity];
     const gastoDiario = tmb * factor;
-
+    console.log(factor);
+    
     // ajuste por objetivo em kcal (valor conservador)
     let ajuste = 0;
     if (goal === "emagrecer") ajuste = -400; // déficit moderado
@@ -176,7 +183,7 @@ function buildPayload() {
     peso: result.inputs.weight,
     altura: result.inputs.height,
     sexo: result.inputs.gender,
-    atividade: result.inputs.activity,
+    atividade: activity,
     objetivo: result.inputs.goal,
     calorias: result.meta, // meta final que o backend espera
     data: new Date().toLocaleDateString(),
@@ -370,11 +377,11 @@ async function handleSendFree(e) {
             <div className="row g-3 mt-3">
               <div className="col-md-6">
                 <Form.Select value={activity} onChange={(e) => setActivity(e.target.value)}>
-                  <option value="1.2">Sedentário</option>
-                  <option value="1.375">Leve (1-3x/sem)</option>
-                  <option value="1.55">Moderado (3-5x/sem)</option>
-                  <option value="1.725">Intenso (6-7x/sem)</option>
-                  <option value="1.9">Muito intenso</option>
+                  <option value="Sedentario">Sedentário</option>
+                  <option value="Leve">Leve (1-3x/sem)</option>
+                  <option value="Moderado">Moderado (3-5x/sem)</option>
+                  <option value="Intenso">Intenso (6-7x/sem)</option>
+                  <option value="Muitointenso">Muito intenso</option>
                 </Form.Select>
               </div>
 
