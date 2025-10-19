@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Button } from "react-bootstrap";
 
-const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio, nomeUsuario, emailUsuario }) => {
-  const [loading, setLoading] = useState(false); // só ativa quando Brick vai carregar
+const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio, nomeUsuario, emailUsuario, onClose }) => {
+  const [loading, setLoading] = useState(false);
   const [erroCheckout, setErroCheckout] = useState(null);
 
   const bricksBuilderRef = useRef(null);
@@ -15,13 +16,24 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio, no
       const script = document.createElement('script');
       script.src = 'https://sdk.mercadopago.com/js/v2';
       script.async = true;
-      script.onload = () => (window.MercadoPago ? resolve(window.MercadoPago) : reject(new Error('SDK carregada mas MercadoPago não disponível.')));
+      script.onload = () =>
+        window.MercadoPago
+          ? resolve(window.MercadoPago)
+          : reject(new Error('SDK carregada mas MercadoPago não disponível.'));
       script.onerror = () => reject(new Error('Falha ao carregar o SDK MercadoPago.'));
       document.body.appendChild(script);
     });
 
+  // Função de fechar/destruir
+  const handleClose = () => {
+    if (brickInstanceRef.current?.destroy) {
+      brickInstanceRef.current.destroy();
+      brickInstanceRef.current = null;
+    }
+    if (onClose) onClose();
+  };
+
   useEffect(() => {
-    // Só inicia o checkout se nome, e-mail e valor estiverem preenchidos
     if (!nomeUsuario || !emailUsuario || !valor) return;
 
     const startCheckout = async () => {
@@ -48,25 +60,16 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio, no
               onReady: () => setLoading(false),
               onSubmit: async (formData) => {
                 try {
-                  const { token, payment_method_id, issuer_id, transaction_amount, installments, payer } = formData;
-
-                  if (!token || !payer?.email) {
-                    throw new Error('Dados obrigatórios ausentes para o pagamento.');
-                  }
-
                   const payload = {
-                    valor: transaction_amount,
-                    token,
-                    parcelamento: installments,
-                    metodo_pagamento: payment_method_id,
-                    issuer_id,
+                    valor: formData.transaction_amount,
+                    token: formData.token,
+                    parcelamento: formData.installments,
+                    metodo_pagamento: formData.payment_method_id,
+                    issuer_id: formData.issuer_id,
                     payer: {
-                      email: payer.email || emailUsuario,
-                      nome: nomeUsuario || payer.first_name || 'Cliente',
-                      identification: {
-                        tp_doc: payer.identification.type,
-                        nr_cpf: payer.identification.number,
-                      },
+                      email: formData.payer.email || emailUsuario,
+                      nome: nomeUsuario || formData.payer.first_name || 'Cliente',
+                      identification: formData.payer.identification,
                     },
                     relatorio,
                   };
@@ -83,7 +86,7 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio, no
                     onPagamentoConfirmado(data.external_reference || data.status);
                     setErroCheckout(null);
                   } else {
-                    setErroCheckout(data.erro || data.message || 'Pagamento recusado.');
+                    setErroCheckout(data?.erro || data?.message || 'Pagamento recusado.');
                   }
                 } catch (err) {
                   console.error(err);
@@ -109,11 +112,11 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio, no
     startCheckout();
 
     return () => {
+      // desmonta corretamente
       if (brickInstanceRef.current?.destroy) brickInstanceRef.current.destroy();
     };
-  }, [valor, descricao, relatorio, onPagamentoConfirmado, nomeUsuario, emailUsuario]);
+  }, [valor, nomeUsuario, emailUsuario, relatorio, onPagamentoConfirmado]);
 
-  // Só renderiza o container se nome/email preenchidos
   if (!nomeUsuario || !emailUsuario) return null;
 
   return (
@@ -125,6 +128,10 @@ const CheckoutBricks = ({ valor, descricao, onPagamentoConfirmado, relatorio, no
       {erroCheckout && <div className="alert alert-danger">{erroCheckout}</div>}
 
       <div ref={paymentBrickContainerRef} id="paymentBrick_container" />
+
+      <Button variant="outline-danger" size="sm" onClick={handleClose}>
+        Cancelar
+      </Button>
     </div>
   );
 };

@@ -13,7 +13,7 @@ export default function Home() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [externalReference, setExternalReference] = useState(null);
-  const [valorPagamento, setValorPagamento] = useState(19.9); // valor do relatório pago
+  const [valorPagamento] = useState(1.0); // valor do relatório pago
   const [onPagamentoConfirmado, setOnPagamentoConfirmado] = useState(false);
   const [mostrarCheckout, setMostrarCheckout] = useState(false);
 
@@ -138,13 +138,19 @@ export default function Home() {
       data: new Date().toLocaleDateString(),
       tmb: result.tmb,
       gastoDiario: result.gastoDiario,
+      externalReference
     };
   }
-
+  function validarEmail(email) {
+    // Regex básica para e-mail válido
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  }
   async function handleSendFree(e) {
     e.preventDefault();
     if (!result) return alert("Realize o cálculo antes.");
     if (!name || !email) return alert("Preencha nome e e-mail.");
+    if (!validarEmail(email)) return alert("E-mail inválido. Por favor, insira um endereço válido.");
 
     const payload = buildPayload();
     setLoading(true);
@@ -167,6 +173,7 @@ export default function Home() {
   function handleAbrirCheckout() {
     if (!result) return alert("Realize o cálculo antes de solicitar o relatório pago.");
     if (!name || !email) return alert("Preencha nome e e-mail para prosseguir com o pagamento.");
+    if (!validarEmail(email)) return alert("E-mail inválido. Por favor, insira um endereço válido.");
     setMostrarCheckout(true);
   }
 
@@ -293,6 +300,7 @@ export default function Home() {
                     <Form.Control type="email" placeholder="Seu melhor e-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
                 </div>
+                
 
                 <div className="d-flex flex-column flex-md-row gap-2 justify-content-center mt-3">
                   <Button
@@ -303,13 +311,41 @@ export default function Home() {
                   >
                     {loading ? <Spinner size="sm" animation="border" /> : "Receber diagnóstico gratuito"}
                   </Button>
+                  
 
                   {!onPagamentoConfirmado && (
                     <Button variant="warning" onClick={handleAbrirCheckout}>
                       Receber relatório completo
                     </Button>
                   )}
+                  
                   </div>
+                  {/* 🔹 Bloco explicativo entre os botões e o checkout */}
+<div className="text-center mt-4 bg-warning bg-opacity-10 border rounded-4 p-3">
+  <h5 className="fw-bold text-dark mb-2">💎 Relatório Completo MrFit</h5>
+  <p className="text-muted mb-1">
+    Receba um relatório <strong>personalizado e detalhado</strong> com:
+  </p> <br></br>
+  <ul className="list-unstyled text-muted small">
+    <li>📊 Distribuição de macronutrientes e plano diário</li>
+    <li>🥗 Sugestões de refeições equilibradas e flexíveis</li>
+    <li>📈 Estratégias personalizadas conforme seu objetivo</li>
+    <li>📝 Mais de 30 substituições de refeições para nunca cair na monotonia</li>
+    <li>⏱️ Economia de tempo: tudo pronto, você só aplica</li>
+    <li>🎯 Controle total do seu progresso e acompanhamento do seu resultado</li>
+    <li>💡 Dicas educativas sobre cada alimento, para você aprender enquanto segue o plano</li>
+<br></br><br></br>
+<h5>Imagine sentir-se <strong>mais leve, disposto </strong>e no controle da sua alimentação a partir de <strong>HOJE !!!</strong> </h5>
+
+
+  </ul>
+  <p className="fw-semibold text-success fs-5 mb-1">
+    Apenas <strong>R$ {valorPagamento.toFixed(2)}</strong>
+  </p>
+  <p className="text-secondary small mb-0">
+    ⚠️ Oferta especial: Após o pagamento, seu relatório é enviado automaticamente por e-mail. Garanta já o seu!
+  </p>
+</div>
                  {mostrarCheckout && (
                    <div className="checkout-container">
                      <CheckoutBricks
