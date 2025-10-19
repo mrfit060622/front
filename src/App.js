@@ -7,6 +7,7 @@ import Termos from './TermosDeUso';
 import PlanoMetabolico from './PlanoMetabolico';
 import PerfilCalorico from './PerfilCalorico';
 import Home from './cta';
+import SucessoPagamento from './sucesso_pagamento';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { Navbar, Nav } from 'react-bootstrap';
 import { trackPageView } from "./analytics";
@@ -44,6 +45,7 @@ function App() {
         <Route path="/TermosDeUso" element={<Termos />} />
         <Route path="/plano-metabolico" element={<PlanoMetabolico />} />
         <Route path="/perfil-calorico" element={<PerfilCalorico />} />
+        <Route path="/sucesso_pagamento" element={<SucessoPagamento />} />
         <Route path="/" element={<Home />} />
       </Routes>
     </Router>

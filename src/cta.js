@@ -3,6 +3,7 @@ import CountUp from "react-countup";
 import { Modal, Button, Form, Spinner } from "react-bootstrap";
 import CheckoutBricks from "./CheckoutBricks";
 import { useLocation, useSearchParams } from "react-router-dom";
+import CheckoutBricks from "./CheckoutBricks";
 
 export default function Home() {
   const location = useLocation();
@@ -183,6 +184,9 @@ export default function Home() {
       });
       if (res.ok) {
         alert("✅ Pagamento confirmado! Seu relatório completo foi enviado ao e-mail informado.");
+        setTimeout(() => {
+        window.location.href = "/sucesso_pagamento"; // ou use navigate("/sucesso") se estiver usando React Router
+      }, 1000);
       } else {
         alert("Erro ao enviar relatório completo após o pagamento.");
       }
