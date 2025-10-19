@@ -29,16 +29,11 @@ function App() {
           <Nav.Link as={Link} to="/Servicos">Serviços</Nav.Link>
           <Nav.Link as={Link} to="/QuemSomos">Quem Somos</Nav.Link>
           <Nav.Link as={Link} to="/TermosDeUso">Termos de uso</Nav.Link>
-          {/* Cadastro em desenvolvimento */}
-          {/*<Nav.Link as={Link} to="/Cadastro">Cadastro</Nav.Link>*/}
         </Nav>
       </Navbar>
 
       {/* Rotas */}
       <Routes>
-        {/* <Route path="/" element={<HOME_OLD />} /> */}
-        {/* Cadastro em desenvolvimento */}
-        {/*<Route path="/Cadastro" element={<Cadastro />} />*/}
         <Route path="/Servicos" element={<Servicos/>} />
         <Route path="/detalhes" element={<Detalhes />} />
         <Route path="/QuemSomos" element={<QuemSomos />} />
