@@ -13,7 +13,7 @@ export default function Home() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [externalReference, setExternalReference] = useState(null);
-  const [valorPagamento] = useState(1.0); // valor do relatório pago
+  const [valorPagamento] = useState(19.90); // valor do relatório pago
   const [onPagamentoConfirmado, setOnPagamentoConfirmado] = useState(false);
   const [mostrarCheckout, setMostrarCheckout] = useState(false);
 
@@ -404,13 +404,13 @@ export default function Home() {
            <p className="text-muted">
              relatórios gerados ajudaram pessoas a atingirem suas metas.
            </p>
-
+{/* 
            <blockquote className="fst-italic text-secondary">
              “Emagreci 4kg em 3 semanas só ajustando o que o relatório mostrou.” — Juliana M.
            </blockquote>
            <blockquote className="fst-italic text-secondary">
              “Valeu cada centavo. Tudo personalizado pra mim.” — Marcos R.
-           </blockquote>
+           </blockquote> */}
          </section>
 
          {/* Oferta Especial */}

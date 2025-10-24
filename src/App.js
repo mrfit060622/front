@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
-import Cadastro from './cadastro';
 import Detalhes from './detalhes';
-import Servicos from './Servicos';
 import QuemSomos from './QuemSomos';
 import Termos from './TermosDeUso';
 import PlanoMetabolico from './PlanoMetabolico';
@@ -23,10 +21,9 @@ function App() {
        <CookieConsent />
       {/* Navbar compartilhada */}
       <Navbar bg="dark" variant="dark">
-        <Navbar.Brand as={Link} to="/">MrFit</Navbar.Brand>
+        <Navbar.Brand as={Link} to="/">SrFit</Navbar.Brand>
         <Nav>
           <Nav.Link as={Link} to="/">Home</Nav.Link>
-          <Nav.Link as={Link} to="/Servicos">Serviços</Nav.Link>
           <Nav.Link as={Link} to="/QuemSomos">Quem Somos</Nav.Link>
           <Nav.Link as={Link} to="/TermosDeUso">Termos de uso</Nav.Link>
         </Nav>
@@ -34,7 +31,6 @@ function App() {
 
       {/* Rotas */}
       <Routes>
-        <Route path="/Servicos" element={<Servicos/>} />
         <Route path="/detalhes" element={<Detalhes />} />
         <Route path="/QuemSomos" element={<QuemSomos />} />
         <Route path="/TermosDeUso" element={<Termos />} />
