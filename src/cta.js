@@ -31,7 +31,13 @@ export default function Home() {
   // Refs
   const calculoRef = useRef(null);
   const resultadoRef = useRef(null);
+  
 
+  useEffect(() => {
+    fetch(`${process.env.REACT_APP_API_HOST}/ping/acorda`)
+      .then(() => console.log("Servidor acordado 🌅"))
+      .catch(() => console.warn("Falha ao acordar o servidor"));
+  }, []);
   // 🔹 Recupera dados se o usuário vier com ?ref=<codigo>
   useEffect(() => {
     if (referenceFromURL) {
